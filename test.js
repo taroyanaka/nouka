@@ -326,6 +326,16 @@
   }
 
   function runRuntimeControlTests() {
+    runScenario({scenarioId:'game_speed_control',phase:'runtime',seed:2399,setup:()=>{
+      [2,4,8,16].forEach(speed=>assert('game_speed_control','runtime',2399,0,`${speed}x_selectable`,api.setSpeed(speed),speed));
+      api.setSpeed(2);
+      api.setWaveConfig({peasant:2});
+      api.startWave();
+    },simulationFrames:14,assertions:state=>{
+      assert('game_speed_control','runtime',2399,14,'selected_speed',api.getSpeed(),2);
+      assert('game_speed_control','runtime',2399,14,'render_frame_is_not_multiplied',state.frame,14);
+      assert('game_speed_control','runtime',2399,14,'simulation_advances_at_selected_speed',state.enemies.length,2);
+    }});
     const scenarioId = 'runtime_determinism_and_scheduler';
     const seed = 2400;
     write({ phase: 'runtime', scenarioId, seed, mapId: 'twin_s', frame: 0, event: 'scenario_start', status: 'running' });
@@ -365,7 +375,7 @@
   runRuntimeControlTests();
   let parsedOutput = output.map(line => JSON.parse(line));
   const scenarioCount = parsedOutput.filter(event => event.event === 'scenario_end').length;
-  const expectedScenarioCount = 185;
+  const expectedScenarioCount = 186;
   if (scenarioCount !== expectedScenarioCount) {
     const mismatch = {
       scenarioId: 'test_run',

@@ -45,8 +45,11 @@ let activeRegulationId='standard';
 function activeRegulation(){return REGULATIONS.find(r=>r.id===activeRegulationId)||REGULATIONS[0]}
 function applyActiveRegulation(){const r=activeRegulation();if(!r)return;TECH_TREES=structuredClone(r.techTrees||DEFAULT_TECH_TREES);activeTreeId=TECH_TREES[0]?.id||'standard'}
 const GAME_TEST_MODE=window.__TEST_MODE__===true;
+const GAME_SPEED_OPTIONS=[1,2,4,8,16];
 const TEST_RUNTIME={enabled:GAME_TEST_MODE,frame:0,random:null,tasks:[]};
-const $=id=>document.getElementById(id),canvas=$('gameCanvas'),ctx=canvas.getContext('2d');let tile=24,grid=[],farms=[],buildings=[],drones=[],enemies=[],bullets=[],effects=[],trapEngine=null,money=0,science=0,wave=0,inWave=false,spawning=false,selected=null,buildMode='select',buffs={},techs={},last=0,spawnTimer;
+const $=id=>document.getElementById(id),canvas=$('gameCanvas'),ctx=canvas.getContext('2d');let tile=24,grid=[],farms=[],buildings=[],drones=[],enemies=[],bullets=[],effects=[],trapEngine=null,money=0,science=0,wave=0,inWave=false,spawning=false,selected=null,buildMode='select',buffs={},techs={},last=0,spawnTimer,gameSpeed=1;
+function normalizeGameSpeed(value){const n=Number(value);return GAME_SPEED_OPTIONS.includes(n)?n:1}
+function setGameSpeed(value){gameSpeed=normalizeGameSpeed(value);const control=$('game-speed');if(control)control.value=String(gameSpeed);renderStats();return gameSpeed}
 function gameRandom(){return TEST_RUNTIME.random?TEST_RUNTIME.random():Math.random()}
 function scheduleGameTask(callback,delayMs){if(!GAME_TEST_MODE)return setTimeout(callback,delayMs);TEST_RUNTIME.tasks.push({callback,frames:Math.max(0,Math.ceil(Number(delayMs||0)/15))});return null}
 function runTestTasks(){for(const task of TEST_RUNTIME.tasks)task.frames--;const ready=TEST_RUNTIME.tasks.filter(task=>task.frames<=0);TEST_RUNTIME.tasks=TEST_RUNTIME.tasks.filter(task=>task.frames>0);ready.forEach(task=>task.callback())}
@@ -78,6 +81,20 @@ function applySavedConfig(){
  if(savedConfig.currentDifficultyLevel!==undefined)currentDifficultyLevel=Number(savedConfig.currentDifficultyLevel)||1;
  applyActiveRegulation();
 }
+
+// In-game simulation speed control. The control is created here so the same
+// test surface can run against the production markup and the minimal test DOM.
+(function installGameSpeedControl(){
+  const sidebar=$('sidebar');
+  if(sidebar&&!$('game-speed')){
+    const wrap=document.createElement('div');
+    wrap.className='speed-control';
+    wrap.innerHTML='<label for="game-speed">進行速度</label><select id="game-speed" aria-label="ゲーム進行速度">'+GAME_SPEED_OPTIONS.map(n=>`<option value="${n}">${n}x</option>`).join('')+'</select>';
+    sidebar.prepend(wrap);
+  }
+  $('game-speed')?.addEventListener('change',event=>setGameSpeed(event.target.value));
+  setGameSpeed(gameSpeed);
+})();
 function validateRegulations(){
  const errors=[];
  if(!Array.isArray(REGULATIONS)||!REGULATIONS.length)errors.push('レギュレーションが1件以上必要です');
@@ -115,7 +132,7 @@ function waveBuffConfig(n){return WAVE_BUFF_CONFIG.waves[n]||WAVE_BUFF_CONFIG.de
 function weightedRarity(weights){let entries=Object.entries(weights||{}).map(([rarity,weight])=>[Number(rarity),Math.max(0,Number(weight)||0)]).filter(x=>x[1]>0);let total=entries.reduce((s,x)=>s+x[1],0);if(!total)return 1;let r=gameRandom()*total;for(let [rarity,weight] of entries){r-=weight;if(r<0)return rarity}return entries[entries.length-1][0]}
 function pickBuffChoices(n){let cfg=waveBuffConfig(n),pool=BUFF_DEFINITIONS.filter(b=>!buffs[b[0]]),choices=[];for(let i=0;i<Math.min(Math.max(0,Number(cfg.appearanceCount)||0),pool.length);i++){let rarity=weightedRarity(cfg.rarityWeights),candidates=pool.filter(b=>Number(b[5])===rarity);if(!candidates.length)candidates=pool;let b=candidates[Math.floor(gameRandom()*candidates.length)];choices.push(b);pool=pool.filter(x=>x!==b)}return choices}
 function resetGame(){clearTimeout(spawnTimer);const current=activeRegulation();if(current&&TECH_TREES?.length)current.techTrees=structuredClone(TECH_TREES);activeDifficultyLevel=Math.max(1,Math.min(5,Math.floor(Number(currentDifficultyLevel)||1)));applyActiveRegulation();money=Math.floor(Number(difficultyConfig().initialMoney)||0);science=0;wave=0;inWave=false;spawning=false;selected=null;buffs={};techs={};grid=Array.from({length:CONFIG.gridRows},()=>Array(CONFIG.gridCols).fill(null));farms=[];buildings=[];drones=[];enemies=[];bullets=[];effects=[];['sow','water','harvest','excavation'].forEach(t=>drones.push(new Drone(t)));renderAll();$('start-tech-overlay').classList.remove('hidden');toast('テックツリーを選択してください')}
-const originalResetGameForTraps=resetGame;resetGame=function(){trapEngine.reset();return originalResetGameForTraps()};
+const originalResetGameForTraps=resetGame;resetGame=function(){setGameSpeed(1);trapEngine.reset();return originalResetGameForTraps()};
 function startWithTree(id){activeTreeId=id;$('start-tech-overlay').classList.add('hidden');renderAll();toast(`${activeTree().name}でゲームを開始しました`)}
 function startWave(){}
 function endGame(win){inWave=false;$('game-result').textContent=win?'VICTORY!':'GAME OVER';$('game-result-detail').textContent=win?'全ウェーブをクリアしました！':'すべての畑が破壊されました。';$('game-overlay').classList.remove('hidden')}
@@ -138,7 +155,7 @@ function drawMapBackdrop(){
 }
 function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);drawMapBackdrop();for(let y=0;y<CONFIG.gridRows;y++)for(let x=0;x<CONFIG.gridCols;x++){let v=grid[y]?.[x];if(v){ctx.fillStyle=colors[v]||'#596b72';ctx.fillRect(x*tile+1,y*tile+1,tile-2,tile-2)}}farms.forEach(f=>{ctx.fillStyle='#64c987';ctx.fillRect(f.gx*tile+2,f.gy*tile+2,tile-4,tile-4);ctx.fillStyle='#19352a';ctx.fillRect(f.gx*tile+3,f.gy*tile+tile-5,(tile-6)*Math.max(0,f.hp/f.maxHp),2)});buildings.forEach(b=>{ctx.fillStyle=colors[b.type]||'#798c96';ctx.fillRect(b.gx*tile+3,b.gy*tile+3,tile-6,tile-6)});enemies.forEach(e=>{ctx.fillStyle=e.definition?.color||'#e85d5d';ctx.beginPath();ctx.arc(e.x,e.y,8,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.font='9px sans-serif';ctx.textAlign='center';ctx.fillText(e.definition?.nameJa||e.type,e.x,e.y-11)});drones.forEach(d=>{ctx.fillStyle='#f8c85d';ctx.beginPath();ctx.arc(d.x,d.y,4,0,Math.PI*2);ctx.fill()});bullets.forEach(b=>{ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(b.x,b.y,2,0,Math.PI*2);ctx.fill()});effects.forEach(e=>{if(e.t){ctx.fillStyle=e.c;ctx.fillText(e.t,e.x,e.y)}})}
 const originalDrawForTraps=draw;draw=function(){originalDrawForTraps();trapEngine.draw(ctx)};
-const originalUpdateForTraps=update;update=function(){trapEngine.update();originalUpdateForTraps()};function loop(t){if(t-last>15){update();last=t}draw();if(!GAME_TEST_MODE)requestAnimationFrame(loop)}function toast(t){let e=$('toast');e.textContent=t;e.style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>e.style.display='none',1800)}
+const originalUpdateForTraps=update;update=function(){trapEngine.update();originalUpdateForTraps()};function loop(t){if(t-last>15){for(let i=0;i<gameSpeed;i++)update();last=t}draw();if(!GAME_TEST_MODE)requestAnimationFrame(loop)}function toast(t){let e=$('toast');e.textContent=t;e.style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>e.style.display='none',1800)}
 function showSelectionAt(x,y){selected=farms.find(f=>f.gx===x&&f.gy===y)||buildings.find(b=>b.gx===x&&b.gy===y)||null;$('selection').innerHTML=selected?`<b>${selected instanceof Farm?'🌱 畑':'🏗 '+selected.type}</b><p>Lv.${selected.level}　HP ${Math.ceil(selected.hp)} / ${Math.ceil(selected.maxHp)}</p><button id="btn-upgrade-target">⬆ アップグレード</button>`:'<b>選択オブジェクト</b><p>キャンバス上の建物を選択してください</p>';if(selected)$('btn-upgrade-target').onclick=()=>{selected.upgrade();renderAll()}}function paintAt(e){let r=canvas.getBoundingClientRect(),x=Math.floor((e.clientX-r.left)*canvas.width/r.width/tile),y=Math.floor((e.clientY-r.top)*canvas.height/r.height/tile),key=`${x},${y}`;if(key===lastPaintTile)return;lastPaintTile=key;if(buildMode!=='select')place(x,y,buildMode);else showSelectionAt(x,y)}canvas.onpointerdown=e=>{pointerDown=true;lastPaintTile='';canvas.setPointerCapture?.(e.pointerId);paintAt(e);e.preventDefault()};canvas.onpointermove=e=>{if(pointerDown){paintAt(e);e.preventDefault()}};canvas.onpointerup=()=>{pointerDown=false;lastPaintTile=''};window.addEventListener('pointerup',()=>{pointerDown=false;lastPaintTile=''});document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab,.tab-panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$(b.dataset.tab).classList.add('active')});$('btn-start-wave').onclick=startWave;$('restart').onclick=()=>{$('game-overlay').classList.add('hidden');resetGame()};$('resume').onclick=()=>document.querySelector('[data-tab="game-tab"]').click();$('reset').onclick=resetGame;
 // Initialization is performed after the map and editor extensions are installed.
 // dependency editing is represented by each research prerequisite array and included in export
@@ -457,7 +474,7 @@ function testReset(options={}){
   renderAll();
   return testState();
 }
-function testStep(frames=1){const count=Math.max(0,Math.floor(Number(frames)||0));for(let i=0;i<count;i++){runTestTasks();update();TEST_RUNTIME.frame++}return testState()}
+function testStep(frames=1){const count=Math.max(0,Math.floor(Number(frames)||0));for(let i=0;i<count;i++){for(let speed=0;speed<gameSpeed;speed++){runTestTasks();update()}TEST_RUNTIME.frame++}return testState()}
 function testSpawnEnemy(id,x,y){if(!ENEMY_DEFINITIONS[id])throw new Error(`Unknown enemy: ${id}`);const e=new Enemy(id),px=Number(x),py=Number(y);e.spawnId=id;e.x=Number.isFinite(px)?px*tile+tile/2:activeMap.spawns[0].x*tile+tile/2;e.y=Number.isFinite(py)?py*tile+tile/2:activeMap.spawns[0].y*tile+tile/2;e.target=farms[0]||null;if(e.target)e.repath();enemies.push(e);inWave=true;spawning=false;return testEnemyState(e)}
 function testPlaceTrap(id,x,y){const definition=TRAP_DEFINITIONS[id];if(!definition)throw new Error(`Unknown trap: ${id}`);const result=trapEngine.place(Number(x),Number(y),definition);if(!result.ok)throw new Error(result.error);inWave=true;return {gx:Number(x),gy:Number(y),definition:structuredClone(definition)}}
 function testPlaceTrapDefinition(definition,x,y){const result=trapEngine.place(Number(x),Number(y),structuredClone(definition));if(!result.ok)throw new Error(result.error);inWave=true;return {gx:Number(x),gy:Number(y),definition:structuredClone(definition)}}
@@ -480,6 +497,8 @@ function testBuffMetrics(){return {mgDamage:mult('mg_damage'),cropSell:mult('cro
 if(GAME_TEST_MODE){
   window.__TEST_API__={
     setSeed(seed){TEST_RUNTIME.random=createTestRandom(seed);return Number(seed)>>>0},
+    setSpeed:setGameSpeed,
+    getSpeed(){return gameSpeed},
     reset:testReset,
     step:testStep,
     getState:testState,

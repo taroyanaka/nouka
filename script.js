@@ -415,9 +415,11 @@ renderAll();
 // the optional enemy editor extension above also decorates this function.
 startWave=function(){if(inWave||wave>=CONFIG.maxWave||!farms.length)return;BUFF_RUNTIME.waveActivations=0;BUFF_RUNTIME.waveBuildings=0;BUFF_RUNTIME.waveTemp={};wave++;inWave=true;spawning=true;const cfg=difficultyWaveConfig(wave)||{},q=[];Object.entries(cfg).forEach(([id,count])=>{for(let i=0;i<getDifficultyEnemyCount(count);i++)q.push(id)});let i=0;function spawn(){if(i<q.length){const spawnPoint=activeMap.spawns[i%activeMap.spawns.length],e=new Enemy(q[i++]);e.spawnId=spawnPoint.id;e.routeId=spawnPoint.id;e.x=spawnPoint.x*tile+tile/2;e.y=spawnPoint.y*tile+tile/2;e.path=[];e.target=farms[0]||null;e.repath();enemies.push(e);spawnTimer=scheduleGameTask(spawn,400)}else spawning=false}spawn();renderAll()};
 draw=function(){
+ // Keep the map backdrop in the final sprite-aware render path.  This used
+ // to be skipped here, which made the route-expanded map shape disappear
+ // whenever this later draw implementation replaced the legacy one.
  ctx.clearRect(0,0,canvas.width,canvas.height);
- const outsideDrawn=drawSprite('outside',canvas.width/2,canvas.height/2,{definition:SPRITE_CONFIG.outside});
- if(!outsideDrawn){ctx.fillStyle='#10271d';ctx.fillRect(0,0,canvas.width,canvas.height)}
+ drawMapBackdrop();
  for(const key of mapShapeCells){const [x,y]=key.split(',').map(Number),v=grid[y]?.[x];if(v==='blocked'){if(!drawSprite('blocked',x*tile+tile/2,y*tile+tile/2)) {ctx.fillStyle='#263844';ctx.fillRect(x*tile+2,y*tile+2,tile-4,tile-4)}}else if(v==='slow'){if(!drawSprite('slow',x*tile+tile/2,y*tile+tile/2)){ctx.fillStyle=colors.slow;ctx.fillRect(x*tile+1,y*tile+1,tile-2,tile-2)}}else if(!v)drawSprite('floor',x*tile+tile/2,y*tile+tile/2)}
  const spawnSprites=new Set(activeMap.spawns.map(s=>`${s.x},${s.y}`));activeMap.spawns.forEach(s=>{if(!drawSprite('spawn',s.x*tile+tile/2,s.y*tile+tile/2)){ctx.fillStyle='#f1d16a';ctx.beginPath();ctx.moveTo(s.x*tile+tile/2,s.y*tile+tile/2+8);ctx.lineTo(s.x*tile+tile/2-7,s.y*tile+tile/2-5);ctx.lineTo(s.x*tile+tile/2+7,s.y*tile+tile/2-5);ctx.closePath();ctx.fill()}});if(!drawSprite('base',activeMap.base.x*tile+tile/2,activeMap.base.y*tile+tile/2)){ctx.strokeStyle='#72e0a0';ctx.beginPath();ctx.arc(activeMap.base.x*tile+tile/2,activeMap.base.y*tile+tile/2,Math.max(9,tile*.42),0,Math.PI*2);ctx.stroke()}
  for(let y=0;y<CONFIG.gridRows;y++)for(let x=0;x<CONFIG.gridCols;x++){const v=grid[y]?.[x];if(!v||v==='blocked'||v==='slow')continue;if(!drawSprite(v,x*tile+tile/2,y*tile+tile/2)){ctx.fillStyle=colors[v]||'#596b72';ctx.fillRect(x*tile+1,y*tile+1,tile-2,tile-2)}}

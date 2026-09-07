@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Farm Defense Integration Tests</title>
+  <style>
+    body{margin:20px;background:#10271d;color:#f3f6d0;font:14px monospace}
+    h1{font:600 20px sans-serif}
+    pre{white-space:pre-wrap;background:#07140f;border:1px solid #345542;padding:12px;max-height:80vh;overflow:auto}
+  </style>
+</head>
+<body>
+  <h1>Farm Defense integration tests</h1>
+  <button id="save-log" type="button" hidden>ログを保存</button>
+  <span id="log-status" aria-live="polite"></span>
+  <pre id="test-output"></pre>
+  <canvas id="gameCanvas" width="360" height="720"></canvas>
+  <div id="money"></div><div id="science"></div><div id="science-tech"></div>
+  <div id="farms"></div><div id="wave"></div><div id="drones"></div>
+  <div id="build-grid"></div><div id="drone-shop"></div><div id="buff-list"></div>
+  <div id="selection"></div><div id="techtree"></div><div id="tree-choices"></div>
+  <div id="param-editor"></div><div id="buff-editor"></div><div id="excavation-editor"></div>
+  <div id="wave-buff-editor"></div><div id="tech-editor"></div><div id="trap-editor"></div>
+  <div id="map-selector"></div><div id="sidebar"></div>
+  <button id="btn-start-wave"></button><button id="resume"></button><button id="export"></button>
+  <button id="reset"></button><button id="restart"></button>
+  <div id="start-tech-overlay"></div><div id="wave-buff-overlay"></div><div id="game-overlay"></div>
+  <div id="game-result"></div><div id="game-result-detail"></div><div id="toast"></div>
+  <div id="buff-choices"></div><div id="wave-buff-caption"></div>
+  <script>window.__TEST_MODE__ = true;</script>
+  <script src="param.js"></script>
+  <script src="trap.js"></script>
+  <script src="script.js"></script>
+  <script src="test.js"></script>
+</body>
+</html>

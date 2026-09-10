@@ -1,17 +1,15 @@
 // Data-driven trap engine. The engine is deliberately independent from the
 // game globals; script.js supplies live state through getter functions.
 (function () {
-  const EFFECT_TYPES = ['slow', 'freeze', 'poison', 'burn', 'armor_down', 'stun', 'knockback', 'pull'];
-  const TRAP_TYPES = ['single', 'line', 'tile', 'area'];
+  const EFFECT_TYPES = ['slow', 'poison', 'burn', 'armor_down', 'stun', 'knockback', 'pull'];
+  const TRAP_TYPES = ['line', 'tile', 'area'];
   const TYPE_RULES = {
-    single: { targeting: 'single' },
     line: { targeting: 'line' },
     tile: { targeting: 'tile' },
     area: { targeting: 'area' }
   };
 
   const DEFAULT_TRAPS = {
-    trap_single: { id: 'trap_single', name: '単体罠', type: 'single', cost: 60, cooldown: 50, range: 4, effects: [{ type: 'poison', amount: 2, duration: 120, interval: 30 }] },
     trap_line: { id: 'trap_line', name: 'ライン罠', type: 'line', cost: 90, cooldown: 90, range: 8, width: 1, effects: [{ type: 'armor_down', amount: 0.2, duration: 120 }] },
     trap_tile: { id: 'trap_tile', name: '床面罠', type: 'tile', cost: 70, cooldown: 0, duration: 120, effects: [{ type: 'slow', amount: 0.5, duration: 120 }] },
     trap_area: { id: 'trap_area', name: '広域罠', type: 'area', cost: 120, cooldown: 120, radius: 3, effects: [{ type: 'stun', duration: 45 }] }
@@ -85,10 +83,6 @@
       const tile = this.state.getTile();
       const c = center(trap, tile);
       const def = trap.definition;
-      if (def.type === 'single') {
-        return enemies.filter(e => distance(e, c) <= number(def.range, 4) * tile)
-          .sort((a, b) => distance(a, c) - distance(b, c)).slice(0, 1);
-      }
       if (def.type === 'area') return enemies.filter(e => distance(e, c) <= number(def.radius, 3) * tile);
       if (def.type === 'tile') {
         return enemies.filter(e => Math.floor(e.x / tile) === trap.gx && Math.floor(e.y / tile) === trap.gy);
@@ -124,13 +118,11 @@
     updateEnemy(enemy) {
       const effects = enemy.statusEffects || [];
       enemy.trapSpeedMultiplier = 1;
-      enemy.trapFrozen = false;
       enemy.trapStunned = false;
       enemy.trapArmor = 0;
       for (const effect of effects) {
         effect.remaining--;
-        if (effect.type === 'slow') enemy.trapSpeedMultiplier *= Math.max(0.05, number(effect.amount, 0.5));
-        if (effect.type === 'freeze') enemy.trapFrozen = true;
+        if (effect.type === 'slow') enemy.trapSpeedMultiplier *= Math.max(0.05, 1 - number(effect.amount, 0.5));
         if (effect.type === 'stun') enemy.trapStunned = true;
         if (effect.type === 'armor_down') enemy.trapArmor += number(effect.amount, 0);
         if (['poison', 'burn'].includes(effect.type) && ++effect.timer >= number(effect.interval, 30)) {
@@ -151,7 +143,7 @@
         ctx.globalAlpha = def.type === 'tile' ? 0.45 : 0.85;
         const drawn = this.state.drawSprite?.('trap', x + tile / 2, y + tile / 2, { definition: def });
         if (!drawn) {
-          ctx.fillStyle = def.type === 'single' ? '#e6b84f' : def.type === 'line' ? '#e87555' : def.type === 'tile' ? '#6d75d9' : '#be76dc';
+          ctx.fillStyle = def.type === 'line' ? '#e87555' : def.type === 'tile' ? '#6d75d9' : '#be76dc';
           ctx.fillRect(x + 3, y + 3, tile - 6, tile - 6);
         }
         ctx.restore();

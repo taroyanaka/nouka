@@ -163,22 +163,20 @@
 
 ## 6. 罠システム
 
-処理は `trap.js` の `TrapEngine` が担当する。罠タイプは `single`、`line`、`tile`、`area`。初期罠は `trap_single`、`trap_line`、`trap_tile`、`trap_area`。
+処理は `trap.js` の `TrapEngine` が担当する。罠タイプは `line`、`tile`、`area`。初期罠は `trap_line`、`trap_tile`、`trap_area`。
 
-対応効果は `slow`、`freeze`、`poison`、`burn`、`armor_down`、`stun`、`knockback`、`pull`。罠定義にはID、名称、タイプ、コスト、クールダウン、タイプ別の射程・半径・持続時間、1つ以上の効果を設定する。
+対応効果は `slow`、`poison`、`burn`、`armor_down`、`stun`、`knockback`、`pull`。罠定義にはID、名称、タイプ、コスト、クールダウン、タイプ別の射程・半径・持続時間、1つ以上の効果を設定する。
 
 初期定義は次のとおり。
 
 | ID | タイプ | コスト | CD | 追加パラメータ | 効果 |
 |---|---|---:|---:|---|---|
-| `trap_single` | single | 60 | 50 | 射程4 | poison:量2、120f、間隔30f |
 | `trap_line` | line | 90 | 90 | 射程8、幅1 | armor_down:量0.2、120f |
 | `trap_tile` | tile | 70 | 0 | 持続120f | slow:量0.5、120f |
 | `trap_area` | area | 120 | 120 | 半径3 | stun:45f |
 
-罠の距離判定はピクセル換算する。`line` は罠セル中心から画面下方向へ伸びる線分だけを対象とし、全方向の直線ではない。`slow` は効果量を速度倍率として使用し、`freeze`/`stun` は敵の通常更新を停止する。毒・火傷は指定間隔ごとにダメージを与える。ノックバック・引き寄せは即時に座標を移動させ、Canvas内にクランプする。
+罠の距離判定はピクセル換算する。`line` は罠セル中心から画面下方向へ伸びる線分だけを対象とし、全方向の直線ではない。`slow` は効果量を速度低下率として使用し、実効速度倍率は `max(0.05, 1 - amount)`、値が大きいほど速度が低下する。`stun` は敵の通常更新を停止する。毒・火傷は指定間隔ごとにダメージを与える。ノックバック・引き寄せは即時に座標を移動させ、Canvas内にクランプする。
 
-- `single`: 射程内の最寄り1体。
 - `line`: 罠から下方向へ伸びる直線上。
 - `tile`: 設置マス上の敵。Wave中は毎更新適用。
 - `area`: 半径内の全敵。
@@ -344,7 +342,7 @@ simulationFrames
 assertions
 ```
 
-`scenarioId` は全ログで一意とする。`phase` は `enemy`、`trap_range`、`trap_effect`、`trap_combination`、`buff` のいずれかを使用する。
+`scenarioId` は全ログで一意とする。現行`test.js`の`phase`は、`enemy`、`enemy_ability`、`enemy_progression`、`map`、`path`、`wave`、`trap_range`、`trap_effect`、`trap_combination`、`trap_boundary`、`trap_validation`、`buff`、`buff_definition`、`buff_runtime`、`runtime`を使用する。
 
 テストケースは、次のライフサイクルで実行する。
 
@@ -383,7 +381,6 @@ assertions
 
 | タイプ | 期待する対象選択 |
 |---|---|
-| `single` | 射程内で罠に最も近い1体 |
 | `line` | 罠セル中心から画面下方向へ伸びる線分上の敵 |
 | `tile` | 罠と同じグリッドマスにいる敵 |
 | `area` | 指定半径以内にいる全敵 |
@@ -392,15 +389,15 @@ assertions
 
 ### 12.7 罠効果テスト
 
-罠効果テストでは、敵を確実に罠の対象位置へ配置し、効果量・効果時間・更新処理を検証する。対象効果は `slow`、`freeze`、`poison`、`burn`、`armor_down`、`stun`、`knockback`、`pull` とする。
+罠効果テストでは、敵を確実に罠の対象位置へ配置し、効果量・効果時間・更新処理を検証する。対象効果は `slow`、`poison`、`burn`、`armor_down`、`stun`、`knockback`、`pull` とする。
 
 各効果について次を検証する。
 
 - 適用直後の状態が設定値どおりである。
 - 持続時間が設定値どおりである。
 - 罠耐性がある敵には効果量と持続時間が割合軽減される。
-- `slow` は速度倍率として適用される。
-- `freeze` と `stun` は敵の通常更新を停止する。
+- `slow` は速度低下率として適用され、`amount` が大きいほど敵の速度が低下する。
+- `stun` は敵の通常更新を停止する。
 - `poison` と `burn` は指定間隔ごとにダメージを与える。
 - `armor_down` は被ダメージ計算に反映される。
 - `knockback` と `pull` は設定方向へ即時移動する。
@@ -413,7 +410,6 @@ assertions
 
 最低限、次を検証する。
 
-- `single` は最寄りの敵だけに効果を付与する。
 - `line` は下方向の線上にいる敵だけに効果を付与する。
 - `tile` は同一マスにいる間だけ効果を継続する。
 - `area` は半径内の全敵へ効果を付与する。
@@ -423,7 +419,7 @@ assertions
 
 ### 12.9 バフテスト
 
-バフテストでは、バフを「定義として存在すること」と「ゲームランタイムへ接続され実際に状態を変更すること」に分けて扱う。現行リポジトリでは `test.js` 自体がないため、このテストは未実施である。
+バフテストでは、バフを「定義として存在すること」と「ゲームランタイムへ接続され実際に状態を変更すること」に分けて扱う。現行リポジトリの `test.js` には、基本バフの定義適用と実効値のシナリオが実装されている。ただし、拡張バフ89個すべての実効効果を網羅するテストではなく、定義適用を確認するシナリオと、実効値を確認する基本バフのシナリオが中心である。
 
 実装済みランタイム効果について、バフ未所持時と所持時を比較し、効果量が設定値どおりになることを確認する。対象には、攻撃力、攻撃間隔、ミサイル射程、畑HP、作物売却額、ドローン速度、作物成長速度、スロー効果、科学生成、即時資金、各種割引、Wave中の効果、最大HP変化を含む。
 
@@ -473,7 +469,7 @@ actual
 
 対象があるイベントでは、`enemyId`、`trapId`、`buffId`、座標、距離を追加する。失敗時には、関連する設定値、罠のクールダウン、敵の状態異常、HP、速度、期待値との差分を追加する。
 
-イベント名は少なくとも次を使用する。
+仕様上のイベント名は次のとおり。ただし、現行`test.js`が実際に出力するイベントは`test_start`、`scenario_start`、`spawned`、`assertion_passed`、`assertion_failed`、`scenario_end`、`test_end`であり、`effect_applied`、`effect_tick`、`effect_expired`、`buff_applied`は現行ログには出力されない。
 
 - `test_start`
 - `scenario_start`
@@ -486,7 +482,7 @@ actual
 - `scenario_end`
 - `test_end`
 
-全ログに `mapId: "straight"` を付ける。将来マップを増やす場合でも、`scenarioId` と `mapId` によりケース間のログが混ざらない構造を維持する。
+通常の`runScenario`ログには`mapId: "straight"`を付ける。決定性・スケジューラ確認では`reset({mapId: "twin_s"})`を使うため、そのシナリオの終了ログは実際の`mapId`（`twin_s`）を付ける。固定値として全ログを`straight`にする仕様ではなく、実行対象マップを記録する。
 
 ### 12.12 成功条件と失敗条件
 
@@ -535,3 +531,46 @@ actual
 | 新仕様のテスト・既存テスト・仕様書更新 | `test.js`、`TEST.md`、本書を実装・更新済み |
 
 上記の未実装項目はNEW_SPECの完了条件を満たさないため、現時点では「NEW_SPECと実装に差異あり」と判定する。本書を統合後の正本とし、`NEW_SPEC.md`は不要な重複仕様書として削除する。
+
+## 14. 現行コードと仕様書の追加照合（2026-09-09）
+
+`script.js`、`trap.js`、`param.js`、`test.js`、`test.html`を再確認した結果、以下を現行実装の正確な状態として追記する。
+
+### 14.1 テスト実装との不一致
+
+- `test.js`はループでシナリオを動的生成する。敵13件、罠・敵能力・Wave・経路・バフ定義適用100件などを合算した実行予定数は181件で、`expectedScenarioCount`の181と一致する。ソース中の`scenarioId`文字列リテラル数だけを数えてはならない。
+- 前回記載していた「実際のシナリオ数24」は、動的生成分を含めていない誤記であるため訂正する。実行結果を確認する場合は、ログの`scenario_end`件数を採用する。
+
+### 14.2 テスト用APIの現行一覧
+
+`window.__TEST_API__`は、設定取得・乱数・速度・初期化・フレーム更新・敵・罠・Wave・建物・畑・バフ・経路・観測のAPIを公開する。主要APIは次のとおり。
+
+`setSeed`、`setSpeed`、`getSpeed`、`reset`、`step`、`getState`、`spawnEnemy`、`placeTrap`、`placeTrapDefinition`、`tryPlaceTrapDefinition`、`setWaveActive`、`setDifficultyConfig`、`setWaveConfig`、`setMaxWave`、`blockCell`、`findPath`、`tryStartWave`、`startWave`、`applyBuff`、`placeBuilding`、`placeFarm`、`removeAllFarms`、`setEnemyHp`、`setEnemyDamage`、`damageEnemy`、`getBuffMetrics`、`getDefinitions`。
+
+通常の`index.html`では`GAME_TEST_MODE`が有効にならないため、`window.__TEST_API__`は公開されない。`test.html`は`__TEST_MODE__`を設定してからゲーム本体と`test.js`を読み込む。
+
+### 14.3 現行実装で仕様化されているが、テストで未網羅の領域
+
+- テックツリーの選択、研究前提、研究解除、研究エディタの編集。
+- レギュレーションの追加・名称変更・削除、レベル切り替え、設定編集内容の保持。
+- `exportConfig()`のクリップボード出力、`applySavedConfig()`による再読み込み。
+- 発掘ドローンの待機、発掘間隔、成功率、資金・科学・バフの抽選。
+- Wave報酬候補のレアリティ重み、取得数、`instant_money`、Waveイベント連携。
+- 全18項目の`SPRITE_CONFIG`、画像ロード失敗時の図形フォールバック、アニメーションフレーム。
+- 全9マップの形状・障害物・複数スポーンと、ランダムblockedマスの経路維持条件。
+
+これらはコード上の機能として存在するが、現行`test.js`の181シナリオは主に敵・罠・Wave・基本バフの統合確認であり、設定編集UI、発掘ドローンの確率分岐、スプライト描画、拡張バフの個別実効効果までは完全には網羅していない。したがって「仕様に記載済み」と「自動テストで網羅済み」は別の状態として扱う。
+
+### 14.4 仕様と実装の既知の差異
+
+- `difficultyMultiplier()`は常に1を返し、Wave表に記載された敵数をそのまま生成する。難易度倍率用の編集UIの一部コードは残っているが、現行のレギュレーションデータと敵生成には適用されない。
+- `startWave`はファイル前半の空定義を後半で実装に置き換える構成であり、最終的にはマップのスポーン地点をラウンドロビンで使い、敵を400ms相当間隔で生成する。
+- `applySavedConfig()`の保存対象に`MAP_DEFINITIONS`は含まれない。マップ定義は`script.js`固定で、保存・編集対象は共通設定、レギュレーション、敵、罠、バフ、発掘、Waveバフ、スプライトである。
+- `validateRegulations()`はレギュレーション、難易度、Wave、敵ID、出現数、テックツリーを起動時に検証するが、`CONFIG`全項目、全マップ、全敵能力、全スプライト項目を一括検証するものではない。
+
+### 14.5 テスト仕様に対する実装範囲
+
+- `test.js`は基本バフ11種の定義存在を確認し、実効値は即時資金・畑HP・科学生成・攻撃力・売却額・ドローン速度・ミサイル射程・マシンガン間隔・ミサイル攻撃力・作物成長・スローの10項目を`getBuffMetrics()`で確認する。拡張バフ89種は定義を適用できることまでを確認し、各効果の実効値は検証しない。
+- `test.js`には建築費・ドローン購入費・アップグレード費の割引、発動時回復、Wave中一時ステータス、リロール、持ち越し、報酬置換、最大HP増加、発掘ドロップの実効値を確認するシナリオはない。これらは仕様上の機能または未接続定義として記録されているが、自動テスト済みとは扱わない。
+- `test.js`は`TEST_RUNTIME.random`をテストページ内で差し替えるが、テスト終了時に元の乱数関数へ明示的に復元する処理はない。通常画面とは別ページで実行するためゲーム本体へ影響しないが、仕様12.3の「復元」要件は未実装である。
+- `test.js`のログはアサーション単位の結果を記録するが、罠効果の付与・継続ダメージ・期限切れを専用イベントとして記録しない。詳細なイベントログを必要とする場合は、`test.js`のログ仕様拡張が必要である。

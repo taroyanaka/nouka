@@ -73,7 +73,6 @@
 
   function runTrapRangeTests() {
     const cases = [
-      { id: 'single', trap: { type: 'single', x: 7, y: 5 }, enemies: [[7, 6], [7, 8]], expected: 1 },
       { id: 'line', trap: { type: 'line', x: 7, y: 5 }, enemies: [[7, 6], [8, 6]], expected: 1 },
       { id: 'tile', trap: { type: 'tile', x: 7, y: 6 }, enemies: [[7, 6], [7, 7]], expected: 1 },
       { id: 'area', trap: { type: 'area', x: 7, y: 5 }, enemies: [[7, 6], [7, 7], [10, 10]], expected: 2 }
@@ -96,8 +95,7 @@
 
   function runTrapEffectTests() {
     const effects = [
-      ['slow', { amount: 0.5 }, enemy => enemy.trapSpeedMultiplier, 0.5],
-      ['freeze', {}, enemy => enemy.trapFrozen, true],
+      ['slow', { amount: 0.75 }, enemy => enemy.trapSpeedMultiplier, 0.25],
       ['poison', { amount: 1, interval: 1 }, enemy => enemy.hp < enemy.maxHp, true],
       ['burn', { amount: 1, interval: 1 }, enemy => enemy.hp < enemy.maxHp, true],
       ['armor_down', { amount: 0.2 }, enemy => enemy.trapArmor, 0.2],
@@ -111,7 +109,7 @@
       seed: 2100 + index,
       setup: () => {
         api.spawnEnemy('peasant', 7, 6);
-        api.placeTrapDefinition(trapDefinition('single', { type: effectType, ...effect }), 7, 5);
+        api.placeTrapDefinition(trapDefinition('area', { type: effectType, ...effect }), 7, 5);
       },
       simulationFrames: 1,
       assertions: (state, before) => {
@@ -126,7 +124,6 @@
 
   function runTrapCombinationTests() {
     const scenarios = [
-      ['single', 1, [[7, 6], [7, 8]]],
       ['line', 1, [[7, 6], [8, 6]]],
       ['tile', 1, [[7, 6], [7, 7]]],
       ['area', 2, [[7, 6], [7, 7], [10, 10]]]
@@ -147,7 +144,7 @@
     }));
 
     runScenario({
-      scenarioId: 'trap_combination_area_single_slow',
+      scenarioId: 'trap_combination_area_slow',
       phase: 'trap_combination',
       seed: 2204,
       setup: () => {
@@ -157,9 +154,9 @@
       },
       simulationFrames: 1,
       assertions: state => {
-        assert('trap_combination_area_single_slow', 'trap_combination', 2204, 1, 'inside_slow', state.enemies[0]?.trapSpeedMultiplier, 0.5);
-        assert('trap_combination_area_single_slow', 'trap_combination', 2204, 1, 'outside_unaffected', state.enemies[1]?.trapSpeedMultiplier, 1);
-        assert('trap_combination_area_single_slow', 'trap_combination', 2204, 1, 'inside_effect_count', state.enemies[0]?.statusEffects.length, 1);
+        assert('trap_combination_area_slow', 'trap_combination', 2204, 1, 'inside_slow', state.enemies[0]?.trapSpeedMultiplier, 0.5);
+        assert('trap_combination_area_slow', 'trap_combination', 2204, 1, 'outside_unaffected', state.enemies[1]?.trapSpeedMultiplier, 1);
+        assert('trap_combination_area_slow', 'trap_combination', 2204, 1, 'inside_effect_count', state.enemies[0]?.statusEffects.length, 1);
       }
     });
 
@@ -252,17 +249,15 @@
   }
 
   function runTrapBoundaryAndValidationTests() {
-    const make=(type,extra={})=>({id:`boundary_${type}`,name:'boundary',type,cost:10,cooldown:2,range:4,radius:3,width:1,duration:60,effects:[{type:'freeze',duration:60}],...extra});
-    runScenario({scenarioId:'trap_single_range_boundary',phase:'trap_boundary',seed:1500,setup:()=>{api.spawnEnemy('peasant',11,5);api.spawnEnemy('peasant',11.01,5);api.placeTrapDefinition(make('single'),7,5)},simulationFrames:1,assertions:state=>assert('trap_single_range_boundary','trap_boundary',1500,1,'boundary_target',state.enemies.filter(e=>e.trapFrozen).length,1)});
-    runScenario({scenarioId:'trap_single_nearest',phase:'trap_boundary',seed:1501,setup:()=>{api.spawnEnemy('peasant',7,6);api.spawnEnemy('peasant',7,7);api.placeTrapDefinition(make('single'),7,5)},simulationFrames:1,assertions:state=>assert('trap_single_nearest','trap_boundary',1501,1,'nearest_only',state.enemies.map(e=>e.trapFrozen),[true,false])});
-    runScenario({scenarioId:'trap_line_width_and_direction',phase:'trap_boundary',seed:1502,setup:()=>{api.spawnEnemy('peasant',7,6);api.spawnEnemy('peasant',7,4);api.spawnEnemy('peasant',8,6);api.placeTrapDefinition(make('line',{range:4,width:1}),7,5)},simulationFrames:1,assertions:state=>assert('trap_line_width_and_direction','trap_boundary',1502,1,'line_targets',state.enemies.map(e=>e.trapFrozen),[true,false,false])});
-    runScenario({scenarioId:'trap_area_radius_boundary',phase:'trap_boundary',seed:1503,setup:()=>{api.spawnEnemy('peasant',10,5);api.spawnEnemy('peasant',10.51,5);api.placeTrapDefinition(make('area',{radius:3}),7,5)},simulationFrames:1,assertions:state=>assert('trap_area_radius_boundary','trap_boundary',1503,1,'area_boundary',state.enemies.map(e=>e.trapFrozen),[true,false])});
-    runScenario({scenarioId:'trap_tile_cell_boundary',phase:'trap_boundary',seed:1504,setup:()=>{api.spawnEnemy('peasant',7,6);api.spawnEnemy('peasant',8,6);api.placeTrapDefinition(make('tile'),7,6)},simulationFrames:1,assertions:state=>assert('trap_tile_cell_boundary','trap_boundary',1504,1,'tile_cell',state.enemies.map(e=>e.trapFrozen),[true,false])});
-    runScenario({scenarioId:'trap_cooldown_and_reapply',phase:'trap_boundary',seed:1505,setup:()=>{api.spawnEnemy('peasant',7,6);api.placeTrapDefinition(make('single',{effects:[{type:'poison',amount:1,duration:60,interval:999}]}),7,5)},simulationFrames:1,assertions:state=>{const first=state.enemies[0].statusEffects[0].remaining;api.step(1);const second=api.getState().enemies[0].statusEffects[0].remaining;api.step(1);const third=api.getState().enemies[0].statusEffects[0].remaining;assert('trap_cooldown_and_reapply','trap_boundary',1505,3,'not_reapplied_during_cooldown',second,first-1);assert('trap_cooldown_and_reapply','trap_boundary',1505,3,'reapplied_after_cooldown',third,59)}});
-    runScenario({scenarioId:'trap_resistance_damage_interval',phase:'trap_effect',seed:1506,setup:()=>{api.spawnEnemy('brute',7,6);api.placeTrapDefinition({id:'resist',name:'resist',type:'single',cost:0,cooldown:999,range:4,effects:[{type:'poison',amount:10,duration:10,interval:2}]},7,5)},simulationFrames:2,assertions:state=>{assert('trap_resistance_damage_interval','trap_effect',1506,2,'resisted_duration',state.enemies[0].statusEffects[0].remaining,3);assert('trap_resistance_damage_interval','trap_effect',1506,2,'interval_damage',state.enemies[0].hp,236.75)}});
-    runScenario({scenarioId:'trap_knockback_pull_clamp',phase:'trap_effect',seed:1507,setup:()=>{api.spawnEnemy('peasant',0,1);api.placeTrapDefinition(make('single',{effects:[{type:'knockback',amount:99,duration:60}]}),0,1)},simulationFrames:1,assertions:state=>{assert('trap_knockback_pull_clamp','trap_effect',1507,1,'canvas_clamped',state.enemies[0].x>=2&&state.enemies[0].y>=26,true);}});
-    runScenario({scenarioId:'trap_wave_stop_duplicate_invalid_and_clone',phase:'trap_validation',seed:1508,setup:()=>{const d=make('single');api.setWaveActive(false);api.placeTrapDefinition(d,7,5);d.effects[0].duration=1;const duplicate=api.tryPlaceTrapDefinition(d,7,5);const invalid=api.tryPlaceTrapDefinition({...d,id:'bad',effects:[]},8,5);api.setWaveActive(true);return {duplicate,invalid}},assertions:state=>{assert('trap_wave_stop_duplicate_invalid_and_clone','trap_validation',1508,1,'trap_unchanged_after_definition_mutation',state.traps[0].definition.effects[0].duration,60);assert('trap_wave_stop_duplicate_invalid_and_clone','trap_validation',1508,1,'one_trap',state.traps.length,1)}});
-    runScenario({scenarioId:'trap_prices_and_four_defaults',phase:'trap_validation',seed:1509,setup:()=>{},assertions:()=>{const defs=api.getDefinitions().TRAP_DEFINITIONS;assert('trap_prices_and_four_defaults','trap_validation',1509,0,'default_trap_types',Object.values(defs).map(d=>d.type).sort(),['area','line','single','tile']);assert('trap_prices_and_four_defaults','trap_validation',1509,0,'nonnegative_prices',Object.values(defs).every(d=>d.cost>=0),true)}});
+    const make=(type,extra={})=>({id:`boundary_${type}`,name:'boundary',type,cost:10,cooldown:2,range:4,radius:3,width:1,duration:60,effects:[{type:'stun',duration:60}],...extra});
+    runScenario({scenarioId:'trap_line_width_and_direction',phase:'trap_boundary',seed:1502,setup:()=>{api.spawnEnemy('peasant',7,6);api.spawnEnemy('peasant',7,4);api.spawnEnemy('peasant',8,6);api.placeTrapDefinition(make('line',{range:4,width:1}),7,5)},simulationFrames:1,assertions:state=>assert('trap_line_width_and_direction','trap_boundary',1502,1,'line_targets',state.enemies.map(e=>e.trapStunned),[true,false,false])});
+    runScenario({scenarioId:'trap_area_radius_boundary',phase:'trap_boundary',seed:1503,setup:()=>{api.spawnEnemy('peasant',10,5);api.spawnEnemy('peasant',10.51,5);api.placeTrapDefinition(make('area',{radius:3}),7,5)},simulationFrames:1,assertions:state=>assert('trap_area_radius_boundary','trap_boundary',1503,1,'area_boundary',state.enemies.map(e=>e.trapStunned),[true,false])});
+    runScenario({scenarioId:'trap_tile_cell_boundary',phase:'trap_boundary',seed:1504,setup:()=>{api.spawnEnemy('peasant',7,6);api.spawnEnemy('peasant',8,6);api.placeTrapDefinition(make('tile'),7,6)},simulationFrames:1,assertions:state=>assert('trap_tile_cell_boundary','trap_boundary',1504,1,'tile_cell',state.enemies.map(e=>e.trapStunned),[true,false])});
+    runScenario({scenarioId:'trap_cooldown_and_reapply',phase:'trap_boundary',seed:1505,setup:()=>{api.spawnEnemy('peasant',7,6);api.placeTrapDefinition(make('line',{effects:[{type:'poison',amount:1,duration:60,interval:999}]}),7,5)},simulationFrames:1,assertions:state=>{const first=state.enemies[0].statusEffects[0].remaining;api.step(1);const second=api.getState().enemies[0].statusEffects[0].remaining;api.step(1);const third=api.getState().enemies[0].statusEffects[0].remaining;assert('trap_cooldown_and_reapply','trap_boundary',1505,3,'not_reapplied_during_cooldown',second,first-1);assert('trap_cooldown_and_reapply','trap_boundary',1505,3,'reapplied_after_cooldown',third,59)}});
+    runScenario({scenarioId:'trap_resistance_damage_interval',phase:'trap_effect',seed:1506,setup:()=>{api.spawnEnemy('brute',7,6);api.placeTrapDefinition({id:'resist',name:'resist',type:'line',cost:0,cooldown:999,range:4,width:1,effects:[{type:'poison',amount:10,duration:10,interval:2}]},7,5)},simulationFrames:2,assertions:state=>{assert('trap_resistance_damage_interval','trap_effect',1506,2,'resisted_duration',state.enemies[0].statusEffects[0].remaining,3);assert('trap_resistance_damage_interval','trap_effect',1506,2,'interval_damage',state.enemies[0].hp,236.75)}});
+    runScenario({scenarioId:'trap_knockback_pull_clamp',phase:'trap_effect',seed:1507,setup:()=>{api.spawnEnemy('peasant',0,1);api.placeTrapDefinition(make('line',{effects:[{type:'knockback',amount:99,duration:60}]}),0,1)},simulationFrames:1,assertions:state=>{assert('trap_knockback_pull_clamp','trap_effect',1507,1,'canvas_clamped',state.enemies[0].x>=2&&state.enemies[0].y>=26,true);}});
+    runScenario({scenarioId:'trap_wave_stop_duplicate_invalid_and_clone',phase:'trap_validation',seed:1508,setup:()=>{const d=make('line');api.setWaveActive(false);api.placeTrapDefinition(d,7,5);d.effects[0].duration=1;const duplicate=api.tryPlaceTrapDefinition(d,7,5);const invalid=api.tryPlaceTrapDefinition({...d,id:'bad',effects:[]},8,5);api.setWaveActive(true);return {duplicate,invalid}},assertions:state=>{assert('trap_wave_stop_duplicate_invalid_and_clone','trap_validation',1508,1,'trap_unchanged_after_definition_mutation',state.traps[0].definition.effects[0].duration,60);assert('trap_wave_stop_duplicate_invalid_and_clone','trap_validation',1508,1,'one_trap',state.traps.length,1)}});
+    runScenario({scenarioId:'trap_prices_and_three_defaults',phase:'trap_validation',seed:1509,setup:()=>{},assertions:()=>{const defs=api.getDefinitions().TRAP_DEFINITIONS;assert('trap_prices_and_three_defaults','trap_validation',1509,0,'default_trap_types',Object.values(defs).map(d=>d.type).sort(),['area','line','tile']);assert('trap_prices_and_three_defaults','trap_validation',1509,0,'nonnegative_prices',Object.values(defs).every(d=>d.cost>=0),true)}});
   }
 
   function runBuffTests() {
@@ -375,7 +370,7 @@
   runRuntimeControlTests();
   let parsedOutput = output.map(line => JSON.parse(line));
   const scenarioCount = parsedOutput.filter(event => event.event === 'scenario_end').length;
-  const expectedScenarioCount = 186;
+  const expectedScenarioCount = 181;
   if (scenarioCount !== expectedScenarioCount) {
     const mismatch = {
       scenarioId: 'test_run',

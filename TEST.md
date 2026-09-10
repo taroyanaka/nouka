@@ -59,7 +59,7 @@ AIは次の3種類のデータを照合する。
 11. 同一シードの再現性とWaveタイマー
 12. ゲーム進行速度の切替（2x/4x/8x/16x）
 
-各シナリオは`test.js`の`runScenario`から初期化され、必要なフレーム数だけ`api.step()`で更新される。現在の想定シナリオ数は186である。実装を変更してシナリオ数が変わった場合は、`test.js`、この文書、最新の`test-log*.json`の件数を同時に更新する。
+各シナリオは`test.js`の`runScenario`から初期化され、必要なフレーム数だけ`api.step()`で更新される。敵定義13件、罠・敵能力・Wave・経路・バフ定義適用100件などをループで展開するため、ソース中のシナリオIDリテラル数と実行件数は一致しない。現在の実行予定件数は181件で、`test.js`の`expectedScenarioCount`も181である。実行時はログの`scenario_end`件数が181件であることを確認する。
 
 設定仕様として、起動時に全レギュレーション・全難易度・全Waveを検証する。未記載Wave、空オブジェクト、未知の敵ID、`CONFIG.maxWave`超過、Wave合計0体は起動エラーになる。スプライト設定は共通で、URI、切り出し、描画サイズ、基準点、アニメーション、反転、フォールバックの各項目を保持できる。レギュレーション切り替えでは編集内容を保持しつつゲームをリセットし、テックツリー選択状態を初期化する。
 
@@ -84,13 +84,23 @@ AIはChromeのブラウザ操作機能を使い、次の手順で実行する。
 テストページが読み込まれた後は、`window.__TEST_API__`を状態確認と失敗再現に使用できる。通常の`index.html`ではこのAPIが存在しないことも確認する。
 
 - `setSeed(seed)`: 決定的な乱数系列を設定
+- `setSpeed(value)` / `getSpeed()`: ゲーム進行速度を設定・取得（1/2/4/8/16）
 - `reset(options)`: マップ、難易度、障害物率を指定して初期化
 - `step(frames)`: 指定フレーム数だけ手動更新
 - `getState()`: 現在のゲーム状態を取得
 - `spawnEnemy(id, x, y)`: 敵を指定座標へ生成
 - `placeTrap(id, x, y)`: 定義済み罠を設置
 - `placeTrapDefinition(definition, x, y)`: テスト用罠定義を設置
+- `tryPlaceTrapDefinition(definition, x, y)`: 例外にせず設置可否を返す
+- `setWaveActive(value)`: Wave中フラグを設定
+- `setDifficultyConfig(level, config)` / `setWaveConfig(config)`: 難易度・次Wave設定を差し替え
+- `setMaxWave(value)`: 最大Waveを差し替え
+- `blockCell(x, y, value)` / `findPath(sx, sy, tx, ty)`: 障害物と経路探索を操作
+- `tryStartWave()` / `startWave()`: Wave開始と開始前後状態の取得
 - `applyBuff(id)`: バフを適用
+- `placeBuilding(type, x, y)` / `placeFarm(x, y)` / `removeAllFarms()`: テスト用建築・畑操作
+- `setEnemyHp(index, hp)` / `setEnemyDamage(index, damage)` / `damageEnemy(index, damage, sourceX, sourceY)`: 敵状態・被ダメージ操作
+- `getBuffMetrics()`: 基本バフの実効倍率を取得
 - `getDefinitions()`: 敵、罠、バフの定義を取得
 
 個別ケースを再現するときは、シード、`reset`の引数、API操作、`step`のフレーム数、操作前後の`getState()`を記録する。
@@ -102,7 +112,7 @@ AIはChromeのブラウザ操作機能を使い、次の手順で実行する。
 - `test_end.status`が`failed`
 - `actual.failures`が0以外
 - `assertion_failed`が存在する
-- `scenario_end`の件数が想定シナリオ数186と一致しない
+- `scenario_end`の件数が、`test.js`内の`expectedScenarioCount`（181）と一致しない
 - 有効な`test-log*.json`がJSONとして読み込めない
 - 通常画面で`window.__TEST_API__`が存在する
 
@@ -116,7 +126,21 @@ AIはChromeのブラウザ操作機能を使い、次の手順で実行する。
 - `failures`: 失敗したシナリオと期待値・実測値
 - `logs`: `scenario_start`、`spawned`、`assertion_passed`、`assertion_failed`、`scenario_end`、`test_end`
 
-各ログには、可能な限り`scenarioId`、`phase`、`seed`、`frame`、`expected`、`actual`を含める。
+各ログには、可能な限り`scenarioId`、`phase`、`seed`、`mapId`、`frame`、`expected`、`actual`を含める。通常シナリオは`straight`、決定性確認シナリオは`reset()`で選択した実マップID（`twin_s`など）を記録する。
+
+## 現行コード照合メモ（2026-09-09）
+
+静的照合で、仕様書とテスト実装の次の差異を確認した。
+
+- `test.js`はループで動的シナリオを生成し、実行予定件数は181件である。ソース中のシナリオIDリテラルを単純に数えると24件程度に見えるが、それは実行件数ではない。
+- `test.js`の`expectedScenarioCount = 181`は、動的生成後の`scenario_end`件数を検証する値であり、現行コード上は妥当である。実際の成否は、ブラウザ実行後の`test_end`と最新ログで確認する。
+- `test.js`のバフテストは、基本バフの定義適用と10種類の基本実効値を確認する。拡張バフ89件の個別ランタイム効果、発掘ドローン、テックツリー編集、レギュレーション編集、スプライト描画は自動テストの網羅外である。
+- 基本バフの実効値テストは、攻撃力、売却額、ドローン速度、ミサイル射程、畑HP、マシンガン間隔、ミサイル攻撃力、作物成長、スロー、科学生成の10項目である。即時資金・畑HP・科学生成には個別ランタイム確認もある。
+- 拡張バフ89件は定義適用とID一意性までを確認する。建築費・ドローン購入費・アップグレード費の割引、発動時回復、Wave中一時ステータス、リロール、持ち越し、報酬置換、最大HP増加、発掘ドロップの実効値シナリオは現行`test.js`にはない。
+- `getDefinitions()`は`CONFIG`、`REGULATIONS`、`ENEMY_DEFINITIONS`、`MAP_DEFINITIONS`、`TRAP_DEFINITIONS`、`BUFF_DEFINITIONS`、`SPRITE_CONFIG`を返す。API一覧にない補助APIも含め、上記の現行API一覧を正とする。
+- `test.html`を直接開く運用であり、HTTPサーバーは不要である。テストログは`localStorage`の`farm-defense-test-log`へ保存し、「ログを保存」ボタンで`test-log.json`をダウンロードする。
+- 現行`test.js`が実際に出力するイベントは`test_start`、`scenario_start`、`spawned`、`assertion_passed`、`assertion_failed`、`scenario_end`、`test_end`である。`effect_applied`などの詳細イベントはTEST仕様上の拡張候補であり、現行ログに出るとは扱わない。
+- `TEST_RUNTIME.random`はテストページ内でシード付き実装へ差し替えられるが、`test.js`終了時の明示的な乱数復元処理はない。テストは`test.html`の独立ページで実行するため、通常画面のランタイムには影響しない。
 
 ## 網羅対象
 
@@ -132,10 +156,10 @@ AIはChromeのブラウザ操作機能を使い、次の手順で実行する。
 
 ### 罠
 
-- `single`、`line`、`tile`、`area`の全4タイプ
-- `slow`、`freeze`、`poison`、`burn`、`armor_down`、`stun`、`knockback`、`pull`の全8効果
-- `trap_combination_single` / `line` / `tile` / `area`: 各罠タイプに毒1効果を設定し、罠の対象範囲内だけに毒が発動すること
-- `trap_combination_area_single_slow`: 範囲罠にスロー1効果を設定し、範囲内の敵の速度低下、範囲外の敵への未適用、付与効果数1を確認すること
+- `line`、`tile`、`area`の全3タイプ
+- `slow`、`poison`、`burn`、`armor_down`、`stun`、`knockback`、`pull`の全7効果
+- `trap_combination_line` / `tile` / `area`: 各罠タイプに毒1効果を設定し、罠の対象範囲内だけに毒が発動すること
+- `trap_combination_area_slow`: 範囲罠にスロー1効果を設定し、範囲内の敵の速度低下、範囲外の敵への未適用、付与効果数1を確認すること
 - `trap_combination_tile_multiple_effects`: 床面罠にスロー・毒・防御低下の3効果を設定し、同じ対象へ3効果が同時付与されること、各実効値、対象外への未適用を確認すること
 - 射程、距離境界、対象数、最寄り選択、line方向、area半径、tile判定
 - 効果量、持続時間、間隔、再適用、罠耐性、クールダウン
@@ -147,9 +171,9 @@ AIはChromeのブラウザ操作機能を使い、次の手順で実行する。
 - 拡張バフ89種の定義、ID一意性、取得状態への反映
 - ダメージ、射程、速度、クールダウン、畑HP、成長、売却、スロー、科学、即時資金
 - 進行速度は2x、4x、8x、16xを選択でき、選択倍率に応じてWave出現タイマーなどのゲーム更新が進む。表示フレーム番号自体は倍率分増加しない。
-- 建築・ドローン購入・アップグレード割引
-- 発動時回復、Wave効果、発動回数、建築数、追加取得、リロール、持ち越し
-- 最大HP増加と報酬置換
+- 建築・ドローン購入・アップグレード割引（仕様項目。現行`test.js`に実効値シナリオなし）
+- 発動時回復、Wave効果、発動回数、建築数、追加取得（仕様項目。現行`test.js`に実効値シナリオなし）
+- リロール、持ち越し、最大HP増加、報酬置換（仕様項目または未接続定義。現行`test.js`に実効値シナリオなし）
 - 仕様上ランタイム未接続の定義は`not_connected`として明示する
 
 ### 共通・組み合わせ

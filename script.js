@@ -273,7 +273,11 @@ const legacyRepathForMaps=Enemy.prototype.repath;
 Enemy.prototype.repath=function(){return legacyRepathForMaps.call(this)};
 function canMapReachBase(extraX=null,extraY=null){const old=extraX===null?null:grid[extraY][extraX];if(extraX!==null)grid[extraY][extraX]='wall';const ok=activeMap.spawns.every(spawn=>findPath(spawn.x,spawn.y,activeMap.base.x,activeMap.base.y).length>0);if(extraX!==null)grid[extraY][extraX]=old;return ok}
 validPlace=function(x,y){if(x<1||y<0||x>=CONFIG.gridCols-1||y>=CONFIG.gridRows||!isMapCell(x,y)||grid[y]?.[x])return false;return canMapReachBase(x,y)};
-canvas.width=720;canvas.height=360;canvas.style.width='100%';canvas.style.height='auto';canvas.parentElement.style.flex='1';canvas.parentElement.style.minWidth='0';tile=canvas.width/CONFIG.gridCols;
+const mainLayout=document.querySelector('main');
+if(mainLayout){mainLayout.style.maxWidth='none';mainLayout.style.width='100%';mainLayout.style.padding='12px 24px';}
+const sidebarLayout=document.querySelector('#sidebar');
+if(sidebarLayout){sidebarLayout.style.flex='0 0 360px';sidebarLayout.style.width='360px';}
+canvas.width=1440;canvas.height=720;canvas.style.width='100%';canvas.style.height='auto';canvas.parentElement.style.flex='1 1 auto';canvas.parentElement.style.width='auto';canvas.parentElement.style.minWidth='0';tile=canvas.width/CONFIG.gridCols;
 configureActiveMap();
 function renderParams(){
  $('param-editor').innerHTML=Object.entries(CONFIG).map(([k,v])=>`<div class="param"><label>${k}<output>${v}</output></label><input data-param="${k}" type="range" min="0" max="${k==='blockedTileSpawnRate'?1:Math.max(v*3,1)}" step="${k==='blockedTileSpawnRate'?'.01':v%1?'.01':'1'}" value="${v}"></div>`).join('');

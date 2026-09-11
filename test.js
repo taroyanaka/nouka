@@ -1,8 +1,46 @@
 (function () {
   'use strict';
 
-  const api = window.__TEST_API__;
-  if (!api) throw new Error('test.js requires __TEST_MODE__ before script.js');
+  const rawApi = window.__TEST_API__;
+  if (!rawApi) throw new Error('test.js requires __TEST_MODE__ before script.js');
+  // Keep the legacy vertical-coordinate scenarios readable while the runtime
+  // is now landscape. New layout scenarios below use rawApi directly.
+  const swapPoint = (x, y) => [y, x];
+  const legacyMap = map => {
+    const copy = JSON.parse(JSON.stringify(map));
+    copy.spawns = copy.spawns.map(p => ({ ...p, x: p.y, y: p.x }));
+    copy.base = { ...copy.base, x: copy.base.y, y: copy.base.x };
+    copy.routes = Object.fromEntries(Object.entries(copy.routes).map(([id, route]) => [id, route.map(([x, y]) => [y, x])]));
+    if (copy.obstacles) copy.obstacles = copy.obstacles.map(([x1, y1, x2, y2]) => [y1, x1, y2, x2]);
+    return copy;
+  };
+  const legacyState = state => {
+    const copy = JSON.parse(JSON.stringify(state));
+    copy.grid = Array.from({ length: 30 }, (_, y) => Array.from({ length: 15 }, (_, x) => state.grid[y]?.[x] ?? null));
+    [...(copy.farms || []), ...(copy.buildings || [])].forEach(item => [item.gx, item.gy] = [item.gy, item.gx]);
+    (copy.traps || []).forEach(item => [item.gx, item.gy] = [item.gy, item.gx]);
+    (copy.enemies || []).forEach(item => [item.x, item.y] = [item.y, item.x]);
+    return copy;
+  };
+  const coordinateMethods = new Set(['spawnEnemy', 'placeTrap', 'placeTrapDefinition', 'tryPlaceTrapDefinition', 'placeBuilding', 'placeFarm', 'blockCell']);
+  const api = new Proxy(rawApi, { get(target, property) {
+    if (property === 'getState' || property === 'testState') return (...args) => legacyState(target[property](...args));
+    if (property === 'getDefinitions') return () => { const defs = target.getDefinitions(); defs.MAP_DEFINITIONS = Object.fromEntries(Object.entries(defs.MAP_DEFINITIONS).map(([id, map]) => [id, legacyMap(map)])); return defs; };
+    if (property === 'findPath') return (x, y, tx, ty) => target.findPath(...swapPoint(x, y), ...swapPoint(tx, ty)).map(([px, py]) => [py, px]);
+    if (coordinateMethods.has(property)) return (...args) => {
+      const bare = property === 'placeFarm' || property === 'blockCell';
+      const offset = bare ? 0 : 1;
+      const [x, y] = swapPoint(args[offset], args[offset + 1]);
+      if (property === 'placeTrapDefinition' || property === 'tryPlaceTrapDefinition') {
+        const definition = { ...args[0], ...(args[0]?.type === 'line' ? { direction: 'right' } : {}) };
+        return target[property](definition, x, y, ...args.slice(3));
+      }
+      return bare ? target[property](x, y, ...args.slice(2)) : target[property](args[0], x, y, ...args.slice(3));
+    };
+    if (property === 'damageEnemy') return (index, damage, x, y) => target.damageEnemy(index, damage, y, x);
+    if (property === 'reset') return (...args) => legacyState(target.reset(...args));
+    return target[property];
+  }});
 
   const output = [];
   const failures = [];
@@ -233,7 +271,7 @@
     runScenario({scenarioId:'path_bfs_success',phase:'path',seed:1320,setup:()=>{},assertions:()=>assert('path_bfs_success','path',1320,0,'path_length',api.findPath(7,0,7,29).length>0,true)});
     runScenario({scenarioId:'path_bfs_failure_after_wall',phase:'path',seed:1321,setup:()=>{for(let x=0;x<15;x++)api.blockCell(x,1)},assertions:()=>assert('path_bfs_failure_after_wall','path',1321,0,'path_empty',api.findPath(7,0,7,29),[])});
     runScenario({scenarioId:'enemy_repath_timers',phase:'path',seed:1322,setup:()=>api.spawnEnemy('peasant',7,0),simulationFrames:20,assertions:state=>{const e=state.enemies[0];assert('enemy_repath_timers','path',1322,20,'twenty_frame_repath_tick',e.pathTick,0);for(let x=0;x<15;x++)api.blockCell(x,2);api.step(1);assert('enemy_repath_timers','path',1322,21,'obstacle_repath_path',api.getState().enemies[0].pathLength,0)}});
-    runScenario({scenarioId:'enemy_nearest_farm',phase:'enemy',seed:1323,setup:()=>{api.placeFarm(5,10);api.placeFarm(12,20);api.spawnEnemy('peasant',7,2)},simulationFrames:1,assertions:state=>assert('enemy_nearest_farm','enemy',1323,1,'moves_to_nearest_farm',state.enemies[0].x<7*24+12,true)});
+    runScenario({scenarioId:'enemy_nearest_farm',phase:'enemy',seed:1323,setup:()=>{api.placeFarm(5,10);api.placeFarm(12,20);api.spawnEnemy('peasant',7,2)},simulationFrames:1,assertions:state=>assert('enemy_nearest_farm','enemy',1323,1,'moves_to_nearest_farm',state.enemies[0].y>2*24+12,true)});
     runScenario({scenarioId:'farm_continuous_attack',phase:'enemy',seed:1324,setup:()=>api.spawnEnemy('peasant',7,29),simulationFrames:5,assertions:state=>assert('farm_continuous_attack','enemy',1324,5,'farm_hp_decreases',state.farms[0].hp<state.farms[0].maxHp,true)});
     runScenario({scenarioId:'farm_destroy_game_over',phase:'enemy',seed:1325,setup:()=>{api.reset({mapId:'straight',difficulty:4,blockedTileSpawnRate:0,disableDrones:true,disableBuffs:true});api.spawnEnemy('peasant',7,29);api.setEnemyDamage(0,6000)},simulationFrames:1,assertions:state=>{assert('farm_destroy_game_over','enemy',1325,1,'all_farms_removed',state.farms.length,0);assert('farm_destroy_game_over','enemy',1325,1,'game_over',state.gameResult,'GAME OVER')}});
     runScenario({scenarioId:'dead_enemy_removed',phase:'enemy',seed:1326,setup:()=>{api.spawnEnemy('peasant',7,1);api.setEnemyHp(0,0);api.setWaveActive(false)},simulationFrames:1,assertions:state=>assert('dead_enemy_removed','enemy',1326,1,'enemy_array_empty',state.enemies.length,0)});
@@ -357,6 +395,31 @@
     }
   }
 
+  function runLandscapeLayoutTests() {
+    const scenarioId = 'landscape_left_to_right_layout';
+    const seed = 2600;
+    write({ phase: 'layout', scenarioId, seed, mapId: 'straight', frame: 0, event: 'scenario_start', status: 'running' });
+    try {
+      rawApi.setSeed(seed);
+      rawApi.reset({ mapId: 'straight', difficulty: 1, blockedTileSpawnRate: 0, disableDrones: true, disableBuffs: true });
+      const definitions = rawApi.getDefinitions();
+      const state = rawApi.getState();
+      const map = definitions.MAP_DEFINITIONS.straight;
+      assert(scenarioId, 'layout', seed, 0, 'grid_is_landscape', [state.grid[0].length, state.grid.length], [30, 15]);
+      assert(scenarioId, 'layout', seed, 0, 'spawn_is_left_base_is_right', [map.spawns[0].x, map.base.x], [0, 29]);
+      assert(scenarioId, 'layout', seed, 0, 'canvas_is_landscape', [canvas.width, canvas.height], [720, 360]);
+      rawApi.spawnEnemy('peasant', map.spawns[0].x, map.spawns[0].y);
+      const before = rawApi.getState().enemies[0].x;
+      rawApi.step(1);
+      const after = rawApi.getState().enemies[0].x;
+      assert(scenarioId, 'layout', seed, 1, 'enemy_moves_left_to_right', after > before, true);
+      write({ phase: 'layout', scenarioId, seed, mapId: 'straight', frame: 1, event: 'scenario_end', status: 'passed' });
+    } catch (error) {
+      failures.push({ scenarioId, error: String(error) });
+      write({ phase: 'layout', scenarioId, seed, mapId: 'straight', frame: 0, event: 'assertion_failed', status: 'error', actual: String(error) });
+    }
+  }
+
   write({ phase: 'all', scenarioId: 'test_run', seed: null, mapId: 'straight', frame: 0, event: 'test_start', status: 'running' });
   runEnemyTests();
   runEnemyProgressionTests();
@@ -368,9 +431,10 @@
   runWaveProgressionTests();
   runBuffTests();
   runRuntimeControlTests();
+  runLandscapeLayoutTests();
   let parsedOutput = output.map(line => JSON.parse(line));
   const scenarioCount = parsedOutput.filter(event => event.event === 'scenario_end').length;
-  const expectedScenarioCount = 181;
+  const expectedScenarioCount = 182;
   if (scenarioCount !== expectedScenarioCount) {
     const mismatch = {
       scenarioId: 'test_run',

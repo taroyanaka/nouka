@@ -112,6 +112,12 @@
         if (existing) Object.assign(existing, copy);
         else enemy.statusEffects.push(copy);
         this.state.spawnVisualEffect?.(effect.type, enemy.x, enemy.y, source);
+        if (!existing) {
+          const labels = { slow: '🐌', poison: '☠', burn: '🔥', armor_down: '🛡↓', stun: '✦', knockback: '↗', pull: '↙' };
+          const colors = { slow: '#8bd3ff', poison: '#c59cff', burn: '#ff9b54', armor_down: '#ffd166', stun: '#fff27a', knockback: '#ff8f70', pull: '#9de1ff' };
+          const amount = effect.amount === undefined ? '' : ` ${number(copy.amount, 0).toFixed(1).replace(/\.0$/, '')}`;
+          this.state.spawnFct?.(enemy.x, enemy.y, `${labels[effect.type] || '✦'}${amount}`, colors[effect.type] || '#fff', 'trap-effect');
+        }
         if (effect.type === 'knockback' || effect.type === 'pull') this.applyDisplacement(enemy, source, effect);
       });
     }
@@ -128,8 +134,8 @@
       const amount = number(effect.amount, 1) * tile;
       enemy.x += dx / len * amount;
       enemy.y += dy / len * amount;
-      enemy.x = Math.max(2, Math.min(this.state.getCanvasWidth() - 2, enemy.x));
-      enemy.y = Math.max(tile + 2, Math.min(this.state.getCanvasHeight() - 2, enemy.y));
+      enemy.x = Math.max(tile + 2, Math.min(this.state.getCanvasWidth() - 2, enemy.x));
+      enemy.y = Math.max(2, Math.min(this.state.getCanvasHeight() - 2, enemy.y));
     }
     updateEnemy(enemy) {
       const effects = enemy.statusEffects || [];

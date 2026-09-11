@@ -106,11 +106,11 @@ let savedConfig = (() => {
     id: 'coin_pusher',
     name: '豊穣戦線：コインプッシャー型',
     difficulties: {
-      1: { initialMoney: 501, waves: scaledWaves(1.0) },
-      2: { initialMoney: 501, waves: scaledWaves(1.3) },
-      3: { initialMoney: 501, waves: scaledWaves(1.7) },
-      4: { initialMoney: 501, waves: scaledWaves(2.2) },
-      5: { initialMoney: 501, waves: scaledWaves(2.8) }
+      1: { initialMoney: 1000000, waves: scaledWaves(1.0) },
+      2: { initialMoney: 1000000, waves: scaledWaves(1.3) },
+      3: { initialMoney: 1000000, waves: scaledWaves(1.7) },
+      4: { initialMoney: 1000000, waves: scaledWaves(2.2) },
+      5: { initialMoney: 1000000, waves: scaledWaves(2.8) }
     },
     techTrees: coinTechTrees,
     trapIcons: {

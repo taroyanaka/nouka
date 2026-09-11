@@ -112,7 +112,15 @@ let savedConfig = (() => {
       4: { initialMoney: 501, waves: scaledWaves(2.2) },
       5: { initialMoney: 501, waves: scaledWaves(2.8) }
     },
-    techTrees: coinTechTrees
+    techTrees: coinTechTrees,
+    trapIcons: {
+      trap_tile_slow: '🐌',
+      trap_tile_poison: '🪙',
+      trap_tile_burn: '🔥',
+      trap_tile_armor_down: '🔨',
+      trap_line_pull: '🧲',
+      trap_line_knockback: '💥'
+    }
   };
 
   return {

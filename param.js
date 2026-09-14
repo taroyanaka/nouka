@@ -51,6 +51,47 @@ let savedConfig = (() => {
     }
   ];
 
+  // CPレギュ2用の特化ビルド。各ツリーは同じレギュレーション内で
+  // ゲーム開始時に選択できるようにする。
+  const cp2TechTrees = [
+    {
+      id: 'cp2_science',
+      name: '科学創出系テックツリービルド',
+      description: '研究所と科学ポイントの創出を最優先する',
+      nodes: [
+        ['cp2_science_start', '研究基盤整備', 1, 50, [], 'buff_science_gen'],
+        ['cp2_science_lab', '研究所増設', 1, 80, ['cp2_science_start'], 'buff_science_gen'],
+        ['cp2_science_cycle', '循環研究', 2, 140, ['cp2_science_lab'], 'buff_crop_speed,buff_science_gen'],
+        ['cp2_science_network', '知識共有網', 3, 240, ['cp2_science_cycle'], 'buff_science_gen,buff_money_instant'],
+        ['cp2_science_master', '科学創出極意', 4, 420, ['cp2_science_network'], 'buff_science_gen,buff_farm_hp']
+      ]
+    },
+    {
+      id: 'cp2_gold',
+      name: 'ゴールド取得系テックツリービルド',
+      description: '即時資金と収穫効率を伸ばし、ゴールドを安定確保する',
+      nodes: [
+        ['cp2_gold_start', '資金調達', 1, 40, [], 'buff_money_instant'],
+        ['cp2_gold_harvest', '高収益収穫', 1, 70, [], 'buff_crop_sell'],
+        ['cp2_gold_market', '市場拡大', 2, 130, ['cp2_gold_harvest'], 'buff_crop_sell,buff_money_instant'],
+        ['cp2_gold_reserve', '利益還元', 3, 230, ['cp2_gold_start', 'cp2_gold_market'], 'buff_money_instant,buff_crop_sell'],
+        ['cp2_gold_master', '黄金循環', 4, 400, ['cp2_gold_reserve'], 'buff_money_instant,buff_crop_sell,buff_farm_hp']
+      ]
+    },
+    {
+      id: 'cp2_drone',
+      name: 'ドローン強化系（ドローン取得&ドローンコスト低下系）テックツリービルド',
+      description: 'ドローンの取得を後押しし、購入コストと運用負担を下げる',
+      nodes: [
+        ['cp2_drone_start', 'ドローン運用許可', 1, 50, [], 'buff_discount_drone'],
+        ['cp2_drone_supply', 'ドローン配備計画', 1, 80, ['cp2_drone_start'], 'buff_money_instant,buff_discount_drone'],
+        ['cp2_drone_speed', '高速航行制御', 2, 140, ['cp2_drone_supply'], 'buff_drone_speed'],
+        ['cp2_drone_discount', '量産コスト削減', 3, 240, ['cp2_drone_speed'], 'buff_discount_drone,buff_drone_speed'],
+        ['cp2_drone_master', '自律採掘群', 4, 420, ['cp2_drone_discount'], 'buff_discount_drone,buff_drone_speed,buff_money_instant']
+      ]
+    }
+  ];
+
   const standardWaves = Object.fromEntries(
     Array.from({ length: 10 }, (_, index) => [
       index + 1,
@@ -74,6 +115,34 @@ let savedConfig = (() => {
   const scaledWaves = multiplier =>
     Object.fromEntries(
       Object.entries(coinBaseWaves).map(([wave, enemies]) => [
+        wave,
+        Object.fromEntries(
+          Object.entries(enemies).map(([enemy, count]) => [
+            enemy,
+            Math.max(1, Math.round(count * multiplier))
+          ])
+        )
+      ])
+    );
+
+  // CPレギュ2は物量重視。序盤から50体程度を出し、Waveが進むほど
+  // 戦士・騎兵・騎士・ブルートなどの強敵比率を段階的に高める。
+  const cp2BaseWaves = {
+    1:  { peasant: 25, adventurer: 15, warrior: 6, thief: 4 },
+    2:  { peasant: 28, adventurer: 16, warrior: 10, thief: 6, horseman: 3 },
+    3:  { peasant: 30, adventurer: 18, warrior: 14, thief: 8, horseman: 6 },
+    4:  { peasant: 32, adventurer: 18, warrior: 18, thief: 9, horseman: 9, priest: 3 },
+    5:  { peasant: 34, adventurer: 18, warrior: 22, thief: 10, horseman: 12, knight: 4, priest: 4 },
+    6:  { peasant: 35, adventurer: 18, warrior: 25, thief: 10, horseman: 15, knight: 8, priest: 5, drummer: 4 },
+    7:  { peasant: 34, adventurer: 18, warrior: 28, thief: 10, horseman: 18, knight: 12, brute: 3, priest: 6, drummer: 5 },
+    8:  { peasant: 32, adventurer: 17, warrior: 30, thief: 10, horseman: 21, knight: 16, brute: 6, priest: 7, drummer: 6 },
+    9:  { peasant: 30, adventurer: 16, warrior: 32, thief: 10, horseman: 24, knight: 20, brute: 10, priest: 8, drummer: 7, wizard_speed: 3 },
+    10: { peasant: 28, adventurer: 15, warrior: 34, thief: 10, horseman: 27, knight: 24, brute: 15, priest: 9, drummer: 8, wizard_speed: 5 }
+  };
+
+  const cp2ScaledWaves = multiplier =>
+    Object.fromEntries(
+      Object.entries(cp2BaseWaves).map(([wave, enemies]) => [
         wave,
         Object.fromEntries(
           Object.entries(enemies).map(([enemy, count]) => [
@@ -123,10 +192,25 @@ let savedConfig = (() => {
     }
   };
 
+  const cp2Regulation = {
+    ...clone(coinRegulation),
+    id: 'coin_pusher_2',
+    name: 'CPレギュ2',
+    difficulties: {
+      1: { initialMoney: 1000000, waves: cp2ScaledWaves(1.0) },
+      2: { initialMoney: 1000000, waves: cp2ScaledWaves(1.15) },
+      3: { initialMoney: 1000000, waves: cp2ScaledWaves(1.35) },
+      4: { initialMoney: 1000000, waves: cp2ScaledWaves(1.6) },
+      5: { initialMoney: 1000000, waves: cp2ScaledWaves(1.9) }
+    },
+    techTrees: cp2TechTrees
+  };
+
   return {
     regulations: [
       standardRegulation,
-      coinRegulation
+      coinRegulation,
+      cp2Regulation
     ],
     activeRegulationId: 'standard',
     currentDifficultyLevel: 1

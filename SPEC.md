@@ -12,7 +12,7 @@
 - 資金で畑・研究所・タレット・罠を設置し、ドローンを購入する。壁と旧来のスロータイルはプレイヤー向け建築一覧には表示しない。
 - Wave 中に敵から畑を守り、`CONFIG.maxWave`（初期値10）を全て終えると勝利。
 - 全ての畑が破壊されるとゲームオーバー。
-- ゲーム状態はページ内メモリで管理する。設定編集内容はメモリ上で保持し、`exportConfig()`で`param.js`へ出力する。
+- ゲーム状態はページ内メモリで管理する。設定編集内容はメモリ上で保持し、`exportConfig()`は `param.js` へ貼り戻せる `savedConfig` 宣言をクリップボードへコピーする。`param.js` の更新と再読み込みは手動で行う。
 
 ## 2. 画面と操作
 
@@ -34,10 +34,11 @@
 
 | キー | 初期値 |
 |---|---:|
-| `gridCols` / `gridRows` | 15 / 30 |
+| `gridCols` / `gridRows` | 30 / 15 |
 | `maxWave` | 10 |
 | `initialMoney` | 501 |
 | `blockedTileSpawnRate` | 0.15（マップの有効セルに対する発掘可能な移動不可マスの出現率。0〜1） |
+| `waveSpawnInterval` / `waveDensityMultiplier` | 180ms / 1.25 |
 | `slowTileEffect` | 0.5 |
 | `costFarm` / `costWall` / `costLab` | 150 / 10 / 250 |
 | `costSlow` / `costMG` / `costMissile` | 50 / 100 / 200 |
@@ -69,7 +70,7 @@
 
 デフォルトは `twin_s`。マップ選択変更時はゲームをリセットする。中心線を幅5セルに拡張した有効グリッドをマップ形状として描画し、形状外は移動・設置できない。マップ障害物が形状内にある場合は障害物として配置される。
 
-初期座標は次のとおり。座標は `[列, 行]` で、スポーンは行0、基地は通常行29にある。
+次表は `MAP_DEFINITIONS` に記述する回転前の作者向け座標である。座標は `[列, 行]`、スポーンは行0、基地は通常行29にある。初期化時に `[行, 列]` へ90度回転するため、実行時にはスポーンが左端、基地が右端になる。
 
 | ID | スポーン | 基地 | ルートの折れ点 |
 |---|---|---|---|
@@ -194,7 +195,7 @@
 
 ## 7. Wave と報酬
 
-Wave開始時にWave番号を増やし、選択中レギュレーションの現在難易度にある`waves[wave]`の敵表を使用する。敵数に倍率や最低数補正は行わない。敵は400ms間隔で、マップのスポーン地点を順番に使用して生成する。
+Wave開始時にWave番号を増やし、選択中レギュレーションの現在難易度にある`waves[wave]`の敵表を使用する。各敵IDの実出現数は `floor(設定数 × CONFIG.waveDensityMultiplier)` であり、初期値は1.25倍である（最低数補正はない）。敵は `CONFIG.waveSpawnInterval`（初期値180ms）間隔で、マップのスポーン地点を順番に使用して生成する。`display_test` はマップ固有の敵表と12ms間隔でこれを上書きする。
 
 全敵が消滅し、スポーンも終了するとWaveクリア。最終Waveなら勝利、そうでなければ `WAVE_BUFF_CONFIG` に従って未取得バフから候補を提示する。初期設定は出現3、レアリティ重みR1=2/R2=1、取得1。候補数・取得数・重みはWave単位で編集できる。
 
@@ -216,14 +217,17 @@ Waveクリア処理では、まずWave終了イベントを発火し、少数建
 | standard | `tech_ballistics` 自動装填機構 | 2 | 150 | defense_1 | `buff_mg_cooldown` |
 | standard | `tech_science_boost` 学術研究推進 | 2 | 100 | agriculture, defense_1 | `buff_science_gen` |
 | standard | `tech_automation` ドローン推進器 | 3 | 250 | irrigation | `buff_drone_speed` |
+| standard | `tech_chemistry` 農薬・焼夷研究 | 3 | 240 | science_boost, defense_1 | `buff_trap_damage`, `buff_trap_duration` |
 | standard | `tech_heavy_artillery` 重火器工学 | 3 | 300 | ballistics | `buff_missile_damage`, `buff_missile_range` |
 | standard | `tech_geo_engineering` 環境改変 | 4 | 450 | automation, heavy_artillery | `buff_slow_tile`, `buff_farm_hp` |
+| standard | `tech_integrated_defense` 統合防衛指揮 | 4 | 520 | chemistry, geo_engineering | `buff_trap_damage`, `buff_mg_damage`, `buff_farm_hp` |
 | expedition | `dig_start` 発掘許可 | 1 | 40 | なし | `buff_money_instant` |
 | expedition | `dig_science` 地質調査 | 1 | 70 | なし | `buff_science_gen` |
 | expedition | `dig_speed` 掘削機構 | 2 | 130 | dig_start | `buff_drone_speed` |
 | expedition | `dig_luck` 幸運の地脈 | 2 | 180 | dig_start, dig_science | `buff_crop_sell` |
 | expedition | `dig_yield` 資源精製 | 3 | 280 | dig_speed, dig_luck | `buff_money_instant` |
 | expedition | `dig_master` 深層発掘 | 4 | 420 | dig_yield | `buff_science_gen`, `buff_money_instant` |
+| expedition | `dig_network` 地層ネットワーク | 4 | 460 | dig_master, dig_science | `buff_trap_duration`, `buff_science_gen` |
 
 CPレギュ2（`coin_pusher_2`）には、標準開拓ツリー、探検・発掘ツリーに加えて、ドローン購入費を下げるドローン強化系（第3ツリー）と、タイル罠作成費を下げるタイル罠強化系（第4ツリー）を持つ。タイル罠系の専用バフは `buff_discount_tile_trap` で、タイル型罠の作成価格にのみ適用される。
 
@@ -280,7 +284,7 @@ CPレギュ3（`coin_pusher_3`）はCPレギュ2の難易度・初期資金・Wa
 
 ゲーム画面の「進行速度」セレクターで、1x、2x、4x、8x、16xをゲーム中に変更できる。初期値は1xである。`requestAnimationFrame` で約15ms以上経過したとき、選択した倍率の回数だけ畑、建物、ドローン、敵、弾、エフェクト、罠の更新処理を連続して実行し、その後にCanvasを1回描画する。したがって、2x/4x/8x/16xでは移動、攻撃、作物成長、Wave出現タイマーなどのゲーム進行がそれぞれの倍率で速くなる。表示上のテストフレーム番号は描画更新回数を表し、倍率分は増加しない。無効な値は1xに正規化する。
 
-速度変更は現在のゲーム状態をリセットせず、次の更新から反映する。ゲーム再開始時は1xに戻る。速度セレクターは通常画面とテスト用DOMの双方で同じ更新APIを使用する。
+速度変更は現在のゲーム状態をリセットせず、次の更新から反映する。リセット・再開始後も選択中の速度は維持される。速度セレクターは通常画面とテスト用DOMの双方で同じ更新APIを使用する。
 
 ## 12. 応用パラメータ統合テスト（test.jsの仕様）
 
@@ -565,15 +569,15 @@ actual
 - `exportConfig()`のクリップボード出力、`applySavedConfig()`による再読み込み。
 - 発掘ドローンの待機、発掘間隔、成功率、資金・科学・バフの抽選。
 - Wave報酬候補のレアリティ重み、取得数、`instant_money`、Waveイベント連携。
-- 全18項目の`SPRITE_CONFIG`、画像ロード失敗時の図形フォールバック、アニメーションフレーム。
+- 全26項目の`SPRITE_CONFIG`、画像ロード失敗時の図形フォールバック、アニメーションフレーム。
 - 全9マップの形状・障害物・複数スポーンと、ランダムblockedマスの経路維持条件。
 
-これらはコード上の機能として存在するが、現行`test.js`の182シナリオは主に敵・罠・Wave・基本バフ・横長レイアウトの統合確認であり、設定編集UI、発掘ドローンの確率分岐、スプライト描画、拡張バフの個別実効効果までは完全には網羅していない。したがって「仕様に記載済み」と「自動テストで網羅済み」は別の状態として扱う。
+これらはコード上の機能として存在するが、現行`test.js`の184シナリオは主に敵・罠・Wave・基本バフ・横長レイアウトの統合確認であり、設定編集UI、発掘ドローンの確率分岐、スプライト描画、拡張バフの個別実効効果までは完全には網羅していない。したがって「仕様に記載済み」と「自動テストで網羅済み」は別の状態として扱う。
 
 ### 14.4 仕様と実装の既知の差異
 
-- `difficultyMultiplier()`は常に1を返し、Wave表に記載された敵数をそのまま生成する。難易度倍率用の編集UIの一部コードは残っているが、現行のレギュレーションデータと敵生成には適用されない。
-- `startWave`はファイル前半の空定義を後半で実装に置き換える構成であり、最終的にはマップのスポーン地点をラウンドロビンで使い、敵を400ms相当間隔で生成する。
+- `difficultyMultiplier()`は常に1を返すため、難易度別の敵HP・速度・攻撃力補正はない。一方、全Waveに共通して`CONFIG.waveDensityMultiplier`（初期値1.25）が敵数へ掛かる。難易度倍率用の編集UIの一部コードは残っているが、現行のレギュレーションデータと敵能力には適用されない。
+- `startWave`はファイル前半の空定義を後半で実装に置き換える構成であり、最終的にはマップのスポーン地点をラウンドロビンで使い、`CONFIG.waveSpawnInterval`（初期値180ms）間隔で生成する。
 - `applySavedConfig()`の保存対象に`MAP_DEFINITIONS`は含まれない。マップ定義は`script.js`固定で、保存・編集対象は共通設定、レギュレーション、敵、罠、バフ、発掘、Waveバフ、スプライトである。
 - `validateRegulations()`はレギュレーション、難易度、Wave、敵ID、出現数、テックツリーを起動時に検証するが、`CONFIG`全項目、全マップ、全敵能力、全スプライト項目を一括検証するものではない。
 
@@ -593,3 +597,11 @@ actual
 - ドローン購入ボタンは建築ボタンと同じグリッドレイアウトで表示する。
 - 罠定義に`icon`（ロゴ絵文字）を持たせ、パラメータ設定の罠編集画面から変更・保存できる。ゲーム画面の罠ボタンと罠エディタの見出しは設定された絵文字を表示する。
 - コインプッシャーレギュレーションは、減速、毒、焼夷、装甲破壊、吸引、撃退の各罠に専用のロゴ絵文字を割り当てる。レギュレーション切り替え時に割り当てを反映する。
+
+## 16. 実装照合・仕様修正（2026-09-16）
+
+`index.html`、`script.js`、`trap.js`、`param.js`、`test.js`、`TEST.md`を再照合した。
+
+- 実行時グリッド、Wave出現数倍率、出現間隔、マップ座標の回転、進行速度のリセット後の扱い、テックツリーの追加ノード、スプライト設定数、テスト件数を現行コードに合わせて訂正した。
+- 罠アイコンの編集欄が仕様に対して不足していたため、`renderTrapEditor()`の後段で各罠へアイコン入力欄を追加した。変更値は罠定義へ保持され、ゲーム画面の罠ボタンとエディタ再描画に反映される。
+- JavaScript 4ファイルの構文検査と差分の空白検査は成功した。ブラウザ統合テストの最新保存済み結果は [TEST.md](TEST.md) 記載の2026-09-11の成功ログであり、今回の監査ではローカル `file:` URLへの自動遷移が実行環境のポリシーで拒否されたため、再実行結果としては扱わない。

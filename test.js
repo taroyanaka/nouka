@@ -305,7 +305,7 @@
       phase: 'buff',
       seed: 2300,
       assertions: state => {
-        assert('buff_definitions', 'buff', 2300, 0, 'definition_count', definitions.length, 100);
+        assert('buff_definitions', 'buff', 2300, 0, 'definition_count', definitions.length, 103);
         assert('buff_definitions', 'buff', 2300, 0, 'all_ids_unique', new Set(definitions.map(definition => definition[0])).size, definitions.length);
       }
     });
@@ -434,7 +434,7 @@
   runLandscapeLayoutTests();
   let parsedOutput = output.map(line => JSON.parse(line));
   const scenarioCount = parsedOutput.filter(event => event.event === 'scenario_end').length;
-  const expectedScenarioCount = 184;
+  const expectedScenarioCount = 187;
   if (scenarioCount !== expectedScenarioCount) {
     const mismatch = {
       scenarioId: 'test_run',

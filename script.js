@@ -467,6 +467,22 @@ document.addEventListener('click',event=>{
 
 // Keep the editor data-driven and expose a compact count for verification.
 function renderDifficultyEditor(){let host=$('difficulty-editor');if(!host){host=document.createElement('div');host.id='difficulty-editor';$('params-tab')?.appendChild(host)}const d=difficultyConfig(),waveRows=Array.from({length:CONFIG.maxWave},(_,i)=>{const n=i+1,w=d.waves?.[n]||{};return `<div class="wave-buff-row"><strong>Wave ${n}</strong>${DIFFICULTY_WAVE_KEYS.map(k=>`<label>${k}<input type="number" min="0" step="0.01" data-diff-wave="${n}" data-diff-key="${k}" value="${w[k]??''}" placeholder="${d.enemyDefaults[k]}"></label>`).join('')}</div>`}).join('');host.innerHTML=`<h2>難易度設定</h2><label>現在の難易度 <select id="difficulty-level">${[1,2,3,4,5].map(n=>`<option value="${n}" ${n===currentDifficultyLevel?'selected':''}>レベル ${n}</option>`).join('')}</select></label><div class="param-editor">${DIFFICULTY_KEYS.map(k=>`<div class="param"><label>${k}<output>${d[k]}</output></label><input type="number" min="0" step="0.01" data-diff-fixed="${k}" value="${d[k]}"></div>`).join('')}</div><h3>敵Wave倍率（未設定項目はデフォルト倍率）</h3><div class="param"><label>enemyHp デフォルト <input type="number" min="0" step="0.01" data-diff-default="enemyHp" value="${d.enemyDefaults.enemyHp}"></label><label>enemyDamage デフォルト <input type="number" min="0" step="0.01" data-diff-default="enemyDamage" value="${d.enemyDefaults.enemyDamage}"></label><label>enemySpeed デフォルト <input type="number" min="0" step="0.01" data-diff-default="enemySpeed" value="${d.enemyDefaults.enemySpeed}"></label><label>enemyCount デフォルト <input type="number" min="0" step="0.01" data-diff-default="enemyCount" value="${d.enemyDefaults.enemyCount}"></label></div>${waveRows}`;host.querySelector('#difficulty-level').onchange=e=>{currentDifficultyLevel=normalizeDifficultyLevel(e.target.value);renderAll()};host.querySelectorAll('[data-diff-fixed]').forEach(i=>i.onchange=()=>{d[i.dataset.diffFixed]=Math.max(0,Number(i.value)||0);renderDifficultyEditor()});host.querySelectorAll('[data-diff-default]').forEach(i=>i.onchange=()=>{d.enemyDefaults[i.dataset.diffDefault]=Math.max(0,Number(i.value)||0);renderDifficultyEditor()});host.querySelectorAll('[data-diff-wave]').forEach(i=>i.onchange=()=>{const n=i.dataset.diffWave,k=i.dataset.diffKey;d.waves[n]??={};if(i.value==='')delete d.waves[n][k];else d.waves[n][k]=Math.max(0,Number(i.value)||0);if(!Object.keys(d.waves[n]).length)delete d.waves[n];renderDifficultyEditor()})}
+const originalRenderTrapEditor=renderTrapEditor;
+renderTrapEditor=function(){
+ originalRenderTrapEditor();
+ const host=$('trap-editor');
+ if(!host)return;
+ host.querySelectorAll('[data-trap-field="name"]').forEach(nameInput=>{
+  const id=nameInput.dataset.trapId,def=TRAP_DEFINITIONS[id];
+  if(!def)return;
+  const label=document.createElement('label');
+  label.textContent='アイコン ';
+  const input=document.createElement('input');
+  input.value=def.icon||'🪤';input.maxLength=8;input.setAttribute('aria-label',`${def.name}のアイコン`);
+  input.onchange=()=>{def.icon=input.value||'🪤';renderTrapEditor()};
+  label.appendChild(input);nameInput.closest('label')?.after(label);
+ });
+};
 const originalRenderParams=renderParams;
 renderParams=function(){originalRenderParams();const note=document.getElementById('buff-editor');if(note&&!document.getElementById('extended-buff-count')){const p=document.createElement('p');p.id='extended-buff-count';p.textContent=`実装バフ: ${extendedBuffCount()}個（データ駆動）`;note.prepend(p)}renderDifficultyEditor()};
 setTimeout(()=>{if(extendedBuffCount()!==89)console.error(`Expected 89 extended buffs, got ${extendedBuffCount()}`);renderAll()},0);

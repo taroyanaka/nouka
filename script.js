@@ -238,7 +238,11 @@ const MAP_DEFINITIONS={
         {type:'wall',gx:4,gy:9},{type:'wall',gx:10,gy:9},{type:'wall',gx:16,gy:9},{type:'wall',gx:22,gy:9},
         {type:'lab',gx:6,gy:6},{type:'lab',gx:12,gy:6},{type:'lab',gx:18,gy:6},{type:'lab',gx:24,gy:6},
         {type:'mg',gx:6,gy:8},{type:'mg',gx:12,gy:8},{type:'mg',gx:18,gy:8},{type:'mg',gx:24,gy:8},
-        {type:'missile',gx:8,gy:5},{type:'missile',gx:14,gy:5},{type:'missile',gx:20,gy:5},{type:'missile',gx:26,gy:5}
+        {type:'missile',gx:8,gy:5},{type:'missile',gx:14,gy:5},{type:'missile',gx:20,gy:5},{type:'missile',gx:26,gy:5},
+        // Forced detours: each wall column leaves exactly one gap in the
+        // five-cell-wide lane, so pathfinding must move around the barrier.
+        {type:'wall',gx:2,gy:6},{type:'wall',gx:2,gy:7},{type:'wall',gx:2,gy:8},{type:'wall',gx:2,gy:9},
+        {type:'wall',gx:27,gy:5},{type:'wall',gx:27,gy:6},{type:'wall',gx:27,gy:7},{type:'wall',gx:27,gy:8}
       ],
       traps:[
         {id:'trap_tile_slow',gx:3,gy:7},{id:'trap_tile_slow',gx:9,gy:7},{id:'trap_tile_slow',gx:15,gy:7},{id:'trap_tile_slow',gx:21,gy:7},

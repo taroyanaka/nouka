@@ -1,0 +1,63 @@
+/*
+ * Smartphone layout
+ * Loaded automatically by index.html only when the viewport is 700px wide
+ * or less. Desktop styles stay in style.css.
+ */
+:root{--mobile-gutter:10px}
+
+html{font-size:15px}
+body{min-width:320px;overflow-x:hidden}
+
+header{position:relative;display:block;padding:10px var(--mobile-gutter);min-height:0}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-bottom:10px}
+.stats b,.stats span{min-width:0;padding:6px 7px;background:var(--panel);border:1px solid var(--line);border-radius:6px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stats span{grid-column:1 / -1;text-align:center}
+nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;width:100%}
+nav button{min-height:42px;padding:7px 4px;font-size:11px}
+#header-game-controls{margin-top:8px}
+.speed-control{margin:0;padding:7px 9px}
+.speed-control select{min-height:36px}
+
+main{padding:var(--mobile-gutter);width:100%}
+.game-layout{gap:10px}
+.canvas-wrap{width:100%;padding:6px;border-radius:8px}
+.canvas-wrap canvas{width:100%;height:auto;aspect-ratio:2 / 1;touch-action:none}
+.hint{padding:7px 3px 2px;font-size:10px}
+.game-layout aside{width:100%;padding:11px}
+.top-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.top-actions button{min-height:44px;padding:8px 5px}
+h3{margin-top:14px}
+.build-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.build-grid button,.drone-btn{min-height:44px;padding:8px 7px;font-size:11px}
+.selection button{min-height:44px}
+
+.section-head{display:block;margin-bottom:14px}
+.section-head strong{display:block;margin-top:9px;font-size:16px}
+.tech-tree,.param-editor,.buff-editor{grid-template-columns:1fr;gap:8px}
+.tier{min-height:0;padding:10px}
+.tree-toolbar{display:grid;grid-template-columns:1fr;gap:7px}
+.tree-toolbar button,.tree-toolbar select{min-height:42px}
+.tree-editor{padding:9px;overflow:hidden}
+.tree-editor>input{display:block;width:100%;margin:0 0 7px;min-height:40px}
+.research-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.research-row input,.research-row select,.research-row button{width:100%;min-width:0;min-height:40px}
+.research-row select{grid-column:1 / -1}
+.research-row small{grid-column:1 / -1;overflow-wrap:anywhere}
+
+.param{padding:9px}
+.param input{min-height:28px}
+.level-toolbar{align-items:stretch;flex-wrap:wrap;padding:8px}
+.level-toolbar select{min-height:38px;flex:1}
+.wave-buff-row{grid-template-columns:1fr 1fr;gap:6px;padding:7px 0}
+.wave-buff-row label:first-child{grid-column:1 / -1}
+.regulation-editor details>div{grid-template-columns:1fr}
+
+.overlay{padding:var(--mobile-gutter)}
+.modal{width:100%;min-width:0;max-width:none;max-height:90vh;overflow:auto;padding:18px 12px}
+#buff-choices{display:grid;grid-template-columns:1fr;gap:8px}
+.choice{width:100%}
+.choice button,.tree-choice button{min-height:44px}
+.tree-choices{display:grid;grid-template-columns:1fr;gap:8px}
+.tree-choice{width:100%;padding:11px}
+button,input,select,textarea{font-size:16px}
+button{touch-action:manipulation}

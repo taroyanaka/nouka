@@ -14,8 +14,10 @@ let savedConfig = (() => {
         ['tech_ballistics', '自動装填機構', 2, 150, ['tech_defense_1'], 'buff_mg_cooldown'],
         ['tech_science_boost', '学術研究推進', 2, 100, ['tech_agriculture', 'tech_defense_1'], 'buff_science_gen'],
         ['tech_automation', 'ドローン推進器', 3, 250, ['tech_irrigation'], 'buff_drone_speed'],
+        ['tech_chemistry', '農薬・焼夷研究', 3, 240, ['tech_science_boost', 'tech_defense_1'], 'buff_trap_damage,buff_trap_duration'],
         ['tech_heavy_artillery', '重火器工学', 3, 300, ['tech_ballistics'], 'buff_missile_damage,buff_missile_range'],
-        ['tech_geo_engineering', '環境改変', 4, 450, ['tech_automation', 'tech_heavy_artillery'], 'buff_slow_tile,buff_farm_hp']
+        ['tech_geo_engineering', '環境改変', 4, 450, ['tech_automation', 'tech_heavy_artillery'], 'buff_slow_tile,buff_farm_hp'],
+        ['tech_integrated_defense', '統合防衛指揮', 4, 520, ['tech_chemistry', 'tech_geo_engineering'], 'buff_trap_damage,buff_mg_damage,buff_farm_hp']
       ]
     },
     {

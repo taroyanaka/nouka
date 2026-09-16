@@ -14,10 +14,10 @@
   };
 
   const DEFAULT_TRAPS = {
-    trap_tile_slow: { id: 'trap_tile_slow', name: '減速タイル', icon: '🐌', type: 'tile', cost: 60, cooldown: 0.75, duration: 2, effects: [{ type: 'slow', amount: 0.45, duration: 2 }] },
-    trap_tile_poison: { id: 'trap_tile_poison', name: '毒タイル', icon: '☠️', type: 'tile', cost: 80, cooldown: 1, duration: 4, effects: [{ type: 'poison', amount: 2, interval: 1, duration: 4 }] },
-    trap_tile_burn: { id: 'trap_tile_burn', name: '焼夷タイル', icon: '🔥', type: 'tile', cost: 85, cooldown: 1.2, duration: 3, effects: [{ type: 'burn', amount: 3, interval: 0.75, duration: 3 }] },
-    trap_tile_armor_down: { id: 'trap_tile_armor_down', name: '装甲破壊タイル', icon: '🛡️', type: 'tile', cost: 75, cooldown: 1.5, duration: 3, effects: [{ type: 'armor_down', amount: 0.25, duration: 3 }] },
+    trap_tile_slow: { id: 'trap_tile_slow', name: '減速タイル', icon: '🐌', color: '#4b82d1', type: 'tile', cost: 60, cooldown: 0.75, duration: 2, effects: [{ type: 'slow', amount: 0.45, duration: 2 }] },
+    trap_tile_poison: { id: 'trap_tile_poison', name: '毒タイル', icon: '☠️', color: '#8b55c7', type: 'tile', cost: 80, cooldown: 1, duration: 4, effects: [{ type: 'poison', amount: 2, interval: 1, duration: 4 }] },
+    trap_tile_burn: { id: 'trap_tile_burn', name: '焼夷タイル', icon: '🔥', color: '#d65b32', type: 'tile', cost: 85, cooldown: 1.2, duration: 3, effects: [{ type: 'burn', amount: 3, interval: 0.75, duration: 3 }] },
+    trap_tile_armor_down: { id: 'trap_tile_armor_down', name: '装甲破壊タイル', icon: '🛡️', color: '#b99235', type: 'tile', cost: 75, cooldown: 1.5, duration: 3, effects: [{ type: 'armor_down', amount: 0.25, duration: 3 }] },
     trap_line_pull: { id: 'trap_line_pull', name: '吸引ライン', icon: '🌀', type: 'line', cost: 90, cooldown: 2, range: 7, width: 1, effects: [{ type: 'pull', amount: 1.5, duration: 0.25 }] },
     trap_line_knockback: { id: 'trap_line_knockback', name: '撃退ライン', icon: '💥', type: 'line', cost: 95, cooldown: 2, range: 7, width: 1, effects: [{ type: 'knockback', amount: 1.5, duration: 0.25 }] }
   };
@@ -107,7 +107,10 @@
       if (!enemy.statusEffects) enemy.statusEffects = [];
       const resistance = Math.max(0, Math.min(1, Number(enemy.trapResistance) || 0));
       effects.forEach(effect => {
-        const copy = { ...effect, amount: number(effect.amount, 0) * (1 - resistance), remaining: Math.max(1, Math.floor(secondsToFrames(effect.duration, 1) * (1 - resistance))), timer: 0, source };
+        const trapMultiplier = window.getTrapBuffMultiplier ? window.getTrapBuffMultiplier(effect.type) : 1;
+        const durationMultiplier = window.getTrapBuffDurationMultiplier ? window.getTrapBuffDurationMultiplier(effect.type) : 1;
+        const tuned = { ...effect, amount: number(effect.amount, 0) * trapMultiplier, duration: number(effect.duration, 1) * durationMultiplier };
+        const copy = { ...tuned, amount: number(tuned.amount, 0) * (1 - resistance), remaining: Math.max(1, Math.floor(secondsToFrames(tuned.duration, 1) * (1 - resistance))), timer: 0, source };
         const existing = enemy.statusEffects.find(x => x.type === effect.type);
         if (existing) Object.assign(existing, copy);
         else enemy.statusEffects.push(copy);
@@ -167,7 +170,7 @@
         const spriteDefinition = def.sprite && typeof def.sprite === 'object' ? { ...def, ...def.sprite } : def;
         const drawn = this.state.drawSprite?.('trap', x + tile / 2, y + tile / 2, { definition: spriteDefinition });
         if (!drawn) {
-          ctx.fillStyle = def.type === 'line' ? '#e87555' : def.type === 'tile' ? '#6d75d9' : '#be76dc';
+          ctx.fillStyle = def.color || (def.type === 'line' ? '#e87555' : def.type === 'tile' ? '#6d75d9' : '#be76dc');
           ctx.fillRect(x + 3, y + 3, tile - 6, tile - 6);
         }
         ctx.restore();

@@ -197,11 +197,19 @@ let savedConfig = (() => {
     techTrees: cp2TechTrees
   };
 
+  const cp3Regulation = {
+    ...clone(cp2Regulation),
+    id: 'coin_pusher_3',
+    name: 'CPレギュ3',
+    techTrees: clone(cp2TechTrees)
+  };
+
   return {
     regulations: [
       standardRegulation,
       coinRegulation,
-      cp2Regulation
+      cp2Regulation,
+      cp3Regulation
     ],
     activeRegulationId: 'standard',
     currentDifficultyLevel: 1

@@ -91,6 +91,18 @@ let savedConfig = (() => {
         ['cp2_drone_discount', '量産コスト削減', 3, 240, ['cp2_drone_speed'], 'buff_discount_drone,buff_drone_speed'],
         ['cp2_drone_master', '自律採掘群', 4, 420, ['cp2_drone_discount'], 'buff_discount_drone,buff_drone_speed,buff_money_instant']
       ]
+    },
+    {
+      id: 'cp2_tile_trap',
+      name: 'タイル罠強化系テックツリービルド',
+      description: 'タイル罠の作成コストを抑え、床面防衛を強化する',
+      nodes: [
+        ['cp2_tile_trap_start', 'タイル罠運用許可', 1, 50, [], 'buff_discount_tile_trap'],
+        ['cp2_tile_trap_supply', 'タイル罠資材調達', 1, 80, ['cp2_tile_trap_start'], 'buff_discount_tile_trap,buff_money_instant'],
+        ['cp2_tile_trap_design', '敷設効率化', 2, 140, ['cp2_tile_trap_supply'], 'buff_discount_tile_trap,buff_trap_duration'],
+        ['cp2_tile_trap_chemistry', '床面薬剤研究', 3, 240, ['cp2_tile_trap_design'], 'buff_discount_tile_trap,buff_trap_damage'],
+        ['cp2_tile_trap_master', '完全タイル防衛', 4, 420, ['cp2_tile_trap_chemistry'], 'buff_discount_tile_trap,buff_trap_damage,buff_trap_duration']
+      ]
     }
   ];
 

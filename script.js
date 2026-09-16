@@ -8,7 +8,7 @@ function selectedDifficultyConfig(){return regulationDifficulty(currentDifficult
 function difficultyWaveConfig(wave){return difficultyConfig().waves?.[wave]||null}
 function difficultyMultiplier(){return 1}
 function scaledCost(base){return Math.floor(Math.max(0,Number(base)||0))}
-function getBuildingCost(type){const key={farm:'costFarm',wall:'costWall',lab:'costLab',slow:'costSlow',mg:'costMG',missile:'costMissile'}[type];return TRAP_DEFINITIONS?.[type]?scaledCost(TRAP_DEFINITIONS[type].cost):scaledCost(key?CONFIG[key]:0)}
+function getBuildingCost(type){const key={farm:'costFarm',wall:'costWall',lab:'costLab',slow:'costSlow',mg:'costMG',missile:'costMissile'}[type];const trap=TRAP_DEFINITIONS?.[type];const raw=trap?Number(trap.cost)||0:scaledCost(key?CONFIG[key]:0);const discount=trap?.type==='tile'&&typeof extDiscount==='function'?extDiscount('tile_trap'):1;return scaledCost(raw*discount)}
 function getDroneCost(type){return scaledCost(CONFIG.costDrone*Math.pow(1.5,drones.filter(d=>d.type===type).length))}
 function getBuildingUpgradeCost(building){const base=building.type==='mg'?CONFIG.costMG:building.type==='missile'?CONFIG.costMissile:building.type==='lab'?CONFIG.costLab:CONFIG.costWall;return scaledCost(base*.8*building.level)}
 function getFarmUpgradeCost(farm){return scaledCost(CONFIG.costFarm*1.5*farm.level)}
@@ -328,6 +328,7 @@ const EXTENDED_BUFFS = (() => {
  const add=(id,name,type,amount,desc,rarity=1,meta={})=>out.push([id,name,type,amount,desc,rarity,{...meta}]);
  add('buff_discount_building','建築費20%引き','discount_building',.2,'建築費が20%引き',2);
  add('buff_discount_drone','ドローン購入費20%引き','discount_drone',.2,'ドローン購入費が20%引き',2);
+ add('buff_discount_tile_trap','タイル罠作成費20%引き','discount_tile_trap',.2,'タイル罠の作成費が20%引き',2);
  add('buff_discount_upgrade','アップグレード費20%引き','discount_upgrade',.2,'アップグレード費が20%引き',2);
  carryTargets.forEach(([key,label],i)=>add(`buff_carry_${key}`,`${label}持ち越し`,'carry_over',1,`${label}を次のWaveへ持ち越す`,2,{target:key}));
  add('buff_heal_on_activation','発動時回復','heal_on_activation',10,'任意の発動ごとにHP回復（回復量は設定可能）',2);

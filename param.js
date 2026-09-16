@@ -53,33 +53,10 @@ let savedConfig = (() => {
     }
   ];
 
-  // CPレギュ2用の特化ビルド。各ツリーは同じレギュレーション内で
-  // ゲーム開始時に選択できるようにする。
+  // CPレギュ2は標準の2ツリーに、CP2専用の2ツリーを追加する。
   const cp2TechTrees = [
-    {
-      id: 'cp2_science',
-      name: '科学創出系テックツリービルド',
-      description: '研究所と科学ポイントの創出を最優先する',
-      nodes: [
-        ['cp2_science_start', '研究基盤整備', 1, 50, [], 'buff_science_gen'],
-        ['cp2_science_lab', '研究所増設', 1, 80, ['cp2_science_start'], 'buff_science_gen'],
-        ['cp2_science_cycle', '循環研究', 2, 140, ['cp2_science_lab'], 'buff_crop_speed,buff_science_gen'],
-        ['cp2_science_network', '知識共有網', 3, 240, ['cp2_science_cycle'], 'buff_science_gen,buff_money_instant'],
-        ['cp2_science_master', '科学創出極意', 4, 420, ['cp2_science_network'], 'buff_science_gen,buff_farm_hp']
-      ]
-    },
-    {
-      id: 'cp2_gold',
-      name: 'ゴールド取得系テックツリービルド',
-      description: '即時資金と収穫効率を伸ばし、ゴールドを安定確保する',
-      nodes: [
-        ['cp2_gold_start', '資金調達', 1, 40, [], 'buff_money_instant'],
-        ['cp2_gold_harvest', '高収益収穫', 1, 70, [], 'buff_crop_sell'],
-        ['cp2_gold_market', '市場拡大', 2, 130, ['cp2_gold_harvest'], 'buff_crop_sell,buff_money_instant'],
-        ['cp2_gold_reserve', '利益還元', 3, 230, ['cp2_gold_start', 'cp2_gold_market'], 'buff_money_instant,buff_crop_sell'],
-        ['cp2_gold_master', '黄金循環', 4, 400, ['cp2_gold_reserve'], 'buff_money_instant,buff_crop_sell,buff_farm_hp']
-      ]
-    },
+    clone(standardTechTrees[0]),
+    clone(standardTechTrees[1]),
     {
       id: 'cp2_drone',
       name: 'ドローン強化系（ドローン取得&ドローンコスト低下系）テックツリービルド',

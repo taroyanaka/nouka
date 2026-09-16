@@ -434,7 +434,7 @@
   runLandscapeLayoutTests();
   let parsedOutput = output.map(line => JSON.parse(line));
   const scenarioCount = parsedOutput.filter(event => event.event === 'scenario_end').length;
-  const expectedScenarioCount = 182;
+  const expectedScenarioCount = 183;
   if (scenarioCount !== expectedScenarioCount) {
     const mismatch = {
       scenarioId: 'test_run',

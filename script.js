@@ -224,6 +224,34 @@ const MAP_DEFINITIONS={
   c_shape:{name:'中央障害物回避（C字）',spawns:[{id:'left',x:2,y:0},{id:'right',x:12,y:0}],base:{x:7,y:29},obstacles:[[5,5,9,23]],routes:{left:[[2,0],[2,27],[7,27],[7,29]],right:[[12,0],[12,27],[7,27],[7,29]]}},
   split_area:{name:'二分分断エリア',spawns:[{id:'left',x:3,y:0},{id:'right',x:11,y:0}],base:{x:7,y:29},obstacles:[[7,0,7,27]],routes:{left:[[3,0],[3,27],[7,27],[7,29]],right:[[11,0],[11,27],[7,27],[7,29]]}},
   twin_s:{name:'双子S字ライン',spawns:[{id:'left',x:2,y:0},{id:'right',x:12,y:0}],base:{x:7,y:29},routes:{left:[[2,0],[2,7],[6,7],[6,15],[2,15],[2,23],[7,23],[7,29]],right:[[12,0],[12,7],[8,7],[8,15],[12,15],[12,23],[7,23],[7,29]]}}
+  ,display_test:{
+    name:'表示確認用・全要素ショーケース',
+    spawns:[{id:'main',x:7,y:0}],
+    base:{x:7,y:29},
+    routes:{main:[[7,0],[7,29]]},
+    showcase:{
+      // These are runtime landscape coordinates. They are intentionally kept
+      // on the route's five-cell-wide display area so every object is visible.
+      buildings:[
+        {type:'farm',gx:4,gy:5},{type:'farm',gx:10,gy:5},{type:'farm',gx:16,gy:5},{type:'farm',gx:22,gy:5},
+        {type:'wall',gx:4,gy:9},{type:'wall',gx:10,gy:9},{type:'wall',gx:16,gy:9},{type:'wall',gx:22,gy:9},
+        {type:'lab',gx:6,gy:6},{type:'lab',gx:12,gy:6},{type:'lab',gx:18,gy:6},{type:'lab',gx:24,gy:6},
+        {type:'mg',gx:6,gy:8},{type:'mg',gx:12,gy:8},{type:'mg',gx:18,gy:8},{type:'mg',gx:24,gy:8},
+        {type:'missile',gx:8,gy:5},{type:'missile',gx:14,gy:5},{type:'missile',gx:20,gy:5},{type:'missile',gx:26,gy:5}
+      ],
+      traps:[
+        {id:'trap_tile_slow',gx:3,gy:7},{id:'trap_tile_slow',gx:9,gy:7},{id:'trap_tile_slow',gx:15,gy:7},{id:'trap_tile_slow',gx:21,gy:7},
+        {id:'trap_tile_poison',gx:4,gy:7},{id:'trap_tile_poison',gx:10,gy:7},{id:'trap_tile_poison',gx:16,gy:7},{id:'trap_tile_poison',gx:22,gy:7},
+        {id:'trap_tile_burn',gx:5,gy:7},{id:'trap_tile_burn',gx:11,gy:7},{id:'trap_tile_burn',gx:17,gy:7},{id:'trap_tile_burn',gx:23,gy:7},
+        {id:'trap_tile_armor_down',gx:6,gy:7},{id:'trap_tile_armor_down',gx:12,gy:7},{id:'trap_tile_armor_down',gx:18,gy:7},{id:'trap_tile_armor_down',gx:24,gy:7},
+        {id:'trap_line_pull',gx:7,gy:7},{id:'trap_line_pull',gx:13,gy:7},{id:'trap_line_pull',gx:19,gy:7},{id:'trap_line_pull',gx:25,gy:7},
+        {id:'trap_line_knockback',gx:8,gy:7},{id:'trap_line_knockback',gx:14,gy:7},{id:'trap_line_knockback',gx:20,gy:7},{id:'trap_line_knockback',gx:26,gy:7}
+      ],
+      droneCounts:{sow:4,water:4,harvest:4,excavation:4},
+      wave:{brute:96,knight:48,shieldmaster:16,priest:8,drummer:8,wizard_speed:4,wizard_attack:4,wizard_heal:4},
+      spawnInterval:12
+    }
+  }
 };
 // Keep map authoring data compact while rotating the runtime map 90 degrees:
 // the former top edge becomes the left edge and the former bottom edge becomes the right edge.
@@ -251,6 +279,8 @@ function mapObstacleCells(){const cells=[];(activeMap.obstacles||[]).forEach(([x
 function randomBlockedCells(){
   const occupied=new Set(mapObstacleCells().map(([x,y])=>`${x},${y}`));
   const reserved=new Set([...activeMap.spawns.map(({x,y})=>`${x},${y}`),`${activeMap.base.x},${activeMap.base.y}`]);
+  const showcase=activeMap.showcase;
+  for(const item of [...(showcase?.buildings||[]),...(showcase?.traps||[])])reserved.add(`${item.gx},${item.gy}`);
   const candidates=[];
   for(let y=0;y<CONFIG.gridRows;y++)for(let x=1;x<CONFIG.gridCols-1;x++){
     const key=`${x},${y}`;
@@ -269,7 +299,23 @@ function randomBlockedCells(){
   return placed;
 }
 function renderMapSelector(){let host=$('map-selector');if(!host){host=document.createElement('label');host.id='map-selector';host.className='map-selector-label';$('header-game-controls')?.appendChild(host)}host.innerHTML=`マップ <select id="map-select">${Object.entries(MAP_DEFINITIONS).map(([id,m])=>`<option value="${id}" ${id===activeMapId?'selected':''}>${m.name}</option>`).join('')}</select>`;host.querySelector('#map-select').onchange=e=>{activeMapId=e.target.value;activeMap=MAP_DEFINITIONS[activeMapId];resetGame()}}
-function configureActiveMap(){activeMap=MAP_DEFINITIONS[activeMapId];rebuildMapRouteCells();rebuildMapShapeCells();grid=Array.from({length:CONFIG.gridRows},()=>Array(CONFIG.gridCols).fill(null));farms=[];buildings=[];const blocked=new Set(mapObstacleCells().map(p=>`${p[0]},${p[1]}`));for(const key of blocked){const [x,y]=key.split(',').map(Number);if(x>=0&&y>=0&&x<CONFIG.gridCols&&y<CONFIG.gridRows&&isMapCell(x,y))grid[y][x]='blocked'}randomBlockedCells();addFarm(activeMap.base.x,activeMap.base.y);renderMapSelector();renderAll()}
+function configureShowcase(){
+  const showcase=activeMap.showcase;if(!showcase)return;
+  for(const item of showcase.buildings||[]){
+    const {type,gx,gy}=item;
+    if(type==='farm'){if(!grid[gy]?.[gx])addFarm(gx,gy);continue}
+    if(grid[gy]?.[gx])continue;
+    grid[gy][gx]=type;buildings.push(new Building(type,gx,gy));
+  }
+  for(const item of showcase.traps||[]){
+    const definition=TRAP_DEFINITIONS[item.id];
+    if(definition&&!grid[item.gy]?.[item.gx]&&trapEngine.place(item.gx,item.gy,definition,lineDirection).ok){}
+  }
+  for(const [type,count] of Object.entries(showcase.droneCounts||{})){
+    for(let i=1;i<Math.max(1,Number(count)||0);i++)drones.push(new Drone(type));
+  }
+}
+function configureActiveMap(){activeMap=MAP_DEFINITIONS[activeMapId];rebuildMapRouteCells();rebuildMapShapeCells();grid=Array.from({length:CONFIG.gridRows},()=>Array(CONFIG.gridCols).fill(null));farms=[];buildings=[];const blocked=new Set(mapObstacleCells().map(p=>`${p[0]},${p[1]}`));for(const key of blocked){const [x,y]=key.split(',').map(Number);if(x>=0&&y>=0&&x<CONFIG.gridCols&&y<CONFIG.gridRows&&isMapCell(x,y))grid[y][x]='blocked'}randomBlockedCells();addFarm(activeMap.base.x,activeMap.base.y);configureShowcase();renderMapSelector();renderAll()}
 const legacyResetGameForMaps=resetGame;
 resetGame=function(){legacyResetGameForMaps();configureActiveMap();$('btn-start-wave').onclick=startWave;$('reset').onclick=resetGame};
 const legacyRepathForMaps=Enemy.prototype.repath;
@@ -482,7 +528,7 @@ setTimeout(()=>document.head.insertAdjacentHTML('beforeend','<style>.brand{displ
 
 // Keep map-aware wave spawning as the final startWave implementation because
 // the optional enemy editor extension above also decorates this function.
-startWave=function(){if(inWave||wave>=CONFIG.maxWave||!farms.length)return;BUFF_RUNTIME.waveActivations=0;BUFF_RUNTIME.waveBuildings=0;BUFF_RUNTIME.waveTemp={};wave++;inWave=true;spawning=true;const cfg=difficultyWaveConfig(wave)||{},q=[];Object.entries(cfg).forEach(([id,count])=>{for(let i=0;i<getDifficultyEnemyCount(count);i++)q.push(id)});let i=0;function spawn(){if(i<q.length){const spawnPoint=activeMap.spawns[i%activeMap.spawns.length],e=new Enemy(q[i++]);e.spawnId=spawnPoint.id;e.routeId=spawnPoint.id;e.x=spawnPoint.x*tile+tile/2;e.y=spawnPoint.y*tile+tile/2;e.path=[];e.target=farms[0]||null;e.repath();enemies.push(e);spawnTimer=scheduleGameTask(spawn,Number(CONFIG.waveSpawnInterval)||180)}else spawning=false}spawn();renderAll()};
+startWave=function(){if(inWave||wave>=CONFIG.maxWave||!farms.length)return;BUFF_RUNTIME.waveActivations=0;BUFF_RUNTIME.waveBuildings=0;BUFF_RUNTIME.waveTemp={};wave++;inWave=true;spawning=true;const showcase=activeMap.showcase;const cfg=(showcase?.wave&&wave<=CONFIG.maxWave)?showcase.wave:(difficultyWaveConfig(wave)||{}),q=[];Object.entries(cfg).forEach(([id,count])=>{for(let i=0;i<getDifficultyEnemyCount(count);i++)q.push(id)});let i=0;function spawn(){if(i<q.length){const spawnPoint=activeMap.spawns[i%activeMap.spawns.length],e=new Enemy(q[i++]);e.spawnId=spawnPoint.id;e.routeId=spawnPoint.id;e.x=spawnPoint.x*tile+tile/2;e.y=spawnPoint.y*tile+tile/2;e.path=[];e.target=farms[0]||null;e.repath();enemies.push(e);spawnTimer=scheduleGameTask(spawn,Number(showcase?.spawnInterval??CONFIG.waveSpawnInterval)||180)}else spawning=false}spawn();renderAll()};
 draw=function(){
  // Keep the map backdrop in the final sprite-aware render path.  This used
  // to be skipped here, which made the route-expanded map shape disappear

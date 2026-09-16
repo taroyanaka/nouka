@@ -126,7 +126,7 @@
 
 ### 5.4 Enemy
 
-敵は `ENEMY_DEFINITIONS` の `peasant`、`adventurer`、`warrior`、`thief`、`horseman`、`knight`、`brute`、`priest`、`drummer`、`shieldmaster`、`wizard_speed`、`wizard_attack`、`wizard_heal` を初期定義として持つ。
+敵は `ENEMY_DEFINITIONS` の通常敵13種に加え、表示確認マップ専用の `showcase_titan` を持つ。`showcase_titan` は通常のレギュレーションWaveには登録せず、`display_test` マップ固有Waveでのみ使用する。
 
 各定義は英語名、日本語名、分類、HP、速度、攻撃力、装甲率、罠耐性、能力IDを持つ。敵生成時は定義値をそのまま使用し、難易度・Wave倍率は適用しない。
 
@@ -547,7 +547,7 @@ actual
 
 ### 14.1 テスト実装との不一致
 
-- `test.js`はループでシナリオを動的生成する。敵13件、罠・敵能力・Wave・経路・バフ定義適用100件などに横長レイアウト検証を加えた実行予定数は183件で、`expectedScenarioCount`の183と一致する。ソース中の`scenarioId`文字列リテラル数だけを数えてはならない。
+- `test.js`はループでシナリオを動的生成する。敵14件、罠・敵能力・Wave・経路・バフ定義適用100件などに横長レイアウト検証を加えた実行予定数は184件で、`expectedScenarioCount`の184と一致する。ソース中の`scenarioId`文字列リテラル数だけを数えてはならない。
 - 前回記載していた「実際のシナリオ数24」は、動的生成分を含めていない誤記であるため訂正する。実行結果を確認する場合は、ログの`scenario_end`件数を採用する。
 
 ### 14.2 テスト用APIの現行一覧

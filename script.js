@@ -30,6 +30,7 @@ const ENEMY_DEFINITIONS={
  horseman:{nameEn:'Horseman',nameJa:'騎兵',category:'fast',hp:70,speed:3,damage:11,armor:.15,trapResistance:.25,abilities:[]},
  knight:{nameEn:'Knight',nameJa:'騎士',category:'heavy',hp:120,speed:.75,damage:15,armor:.3,trapResistance:.35,abilities:[]},
  brute:{nameEn:'Brute',nameJa:'ブルート',category:'heavy',hp:240,speed:.55,damage:24,armor:.35,trapResistance:.5,abilities:[]},
+ showcase_titan:{nameEn:'Showcase Titan',nameJa:'ショーケース用超高耐久兵',category:'showcase',hp:100000,speed:.85,damage:16,armor:.15,trapResistance:.15,abilities:[]},
  priest:{nameEn:'Priest',nameJa:'僧侶',category:'support',hp:40,speed:1.2,damage:5,armor:0,trapResistance:0,abilities:['heal_aura']},
  drummer:{nameEn:'Drummer',nameJa:'ドラマー',category:'support',hp:65,speed:1.2,damage:7,armor:0,trapResistance:0,abilities:['speed_aura','attack_aura']},
  shieldmaster:{nameEn:'Shieldmaster',nameJa:'シールドマスター',category:'shield',hp:130,speed:.75,damage:14,armor:.2,trapResistance:.35,abilities:['front_shield']},
@@ -248,7 +249,7 @@ const MAP_DEFINITIONS={
         {id:'trap_line_knockback',gx:8,gy:7},{id:'trap_line_knockback',gx:14,gy:7},{id:'trap_line_knockback',gx:20,gy:7},{id:'trap_line_knockback',gx:26,gy:7}
       ],
       droneCounts:{sow:4,water:4,harvest:4,excavation:4},
-      wave:{brute:96,knight:48,shieldmaster:16,priest:8,drummer:8,wizard_speed:4,wizard_attack:4,wizard_heal:4},
+      wave:{showcase_titan:96,brute:96,knight:48,shieldmaster:16,priest:8,drummer:8,wizard_speed:4,wizard_attack:4,wizard_heal:4},
       spawnInterval:12
     }
   }

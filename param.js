@@ -17,7 +17,13 @@ let savedConfig = (() => {
         ['tech_chemistry', '農薬・焼夷研究', 3, 240, ['tech_science_boost', 'tech_defense_1'], 'buff_trap_damage,buff_trap_duration'],
         ['tech_heavy_artillery', '重火器工学', 3, 300, ['tech_ballistics'], 'buff_missile_damage,buff_missile_range'],
         ['tech_geo_engineering', '環境改変', 4, 450, ['tech_automation', 'tech_heavy_artillery'], 'buff_slow_tile,buff_farm_hp'],
-        ['tech_integrated_defense', '統合防衛指揮', 4, 520, ['tech_chemistry', 'tech_geo_engineering'], 'buff_trap_damage,buff_mg_damage,buff_farm_hp']
+        ['tech_integrated_defense', '統合防衛指揮', 4, 520, ['tech_chemistry', 'tech_geo_engineering'], 'buff_trap_damage,buff_mg_damage,buff_farm_hp'],
+        ['tech_industrial_farming', '工業農業', 5, 650, ['tech_geo_engineering', 'tech_integrated_defense'], 'buff_standard_industrial_farming,buff_standard_industrial_market'],
+        ['tech_fire_control', '射撃管制AI', 6, 800, ['tech_integrated_defense'], 'buff_standard_fire_control,buff_standard_fire_rate'],
+        ['tech_bioengineering', '生体農地工学', 7, 1000, ['tech_industrial_farming'], 'buff_standard_bioengineering,buff_farm_hp'],
+        ['tech_orbital_artillery', '軌道砲撃', 8, 1250, ['tech_fire_control'], 'buff_standard_orbital_artillery,buff_standard_orbital_radar'],
+        ['tech_fortress_grid', '要塞農地網', 9, 1600, ['tech_bioengineering', 'tech_orbital_artillery'], 'buff_standard_fortress_grid,buff_slow_tile'],
+        ['tech_singularity', '開拓特異点', 10, 2200, ['tech_fortress_grid'], 'buff_standard_singularity,buff_standard_singularity_rate,buff_standard_orbital_artillery,buff_standard_industrial_market']
       ]
     },
     {
@@ -30,7 +36,14 @@ let savedConfig = (() => {
         ['dig_speed', '掘削機構', 2, 130, ['dig_start'], 'buff_drone_speed'],
         ['dig_luck', '幸運の地脈', 2, 180, ['dig_start', 'dig_science'], 'buff_crop_sell'],
         ['dig_yield', '資源精製', 3, 280, ['dig_speed', 'dig_luck'], 'buff_money_instant'],
-        ['dig_master', '深層発掘', 4, 420, ['dig_yield'], 'buff_science_gen,buff_money_instant']
+        ['dig_master', '深層発掘', 4, 420, ['dig_yield'], 'buff_science_gen,buff_money_instant'],
+        ['dig_network', '地層ネットワーク', 4, 460, ['dig_master', 'dig_science'], 'buff_trap_duration,buff_science_gen'],
+        ['dig_core', '深層資源核', 5, 620, ['dig_master', 'dig_network'], 'buff_expedition_core,buff_expedition_core_science'],
+        ['dig_fleet', '発掘艦隊', 6, 780, ['dig_core'], 'buff_expedition_fleet,buff_expedition_trade'],
+        ['dig_rare_earth', '希少鉱脈精錬', 7, 980, ['dig_fleet'], 'buff_expedition_rare_earth,buff_expedition_rare_science'],
+        ['dig_quantum_scan', '量子スキャナー', 8, 1220, ['dig_rare_earth'], 'buff_expedition_quantum_scan,buff_expedition_quantum_range'],
+        ['dig_underworld', '地底炉心', 9, 1550, ['dig_quantum_scan'], 'buff_expedition_underworld,buff_expedition_underworld_science'],
+        ['dig_legendary', '伝説資源市場', 10, 2100, ['dig_underworld'], 'buff_expedition_legendary,buff_expedition_legendary_science,buff_expedition_quantum_scan']
       ]
     }
   ];
@@ -48,7 +61,13 @@ let savedConfig = (() => {
         ['coin_science', '研究所拡張', 2, 180, ['coin_agriculture'], 'buff_science_gen'],
         ['coin_drone', '物流自動化', 3, 260, ['coin_income'], 'buff_drone_speed'],
         ['coin_missile', '重火器配備', 3, 320, ['coin_cooldown'], 'buff_missile_damage,buff_missile_range'],
-        ['coin_final', '総力戦農地', 4, 500, ['coin_drone', 'coin_missile'], 'buff_farm_hp,buff_slow_tile']
+        ['coin_final', '総力戦農地', 4, 500, ['coin_drone', 'coin_missile'], 'buff_farm_hp,buff_slow_tile'],
+        ['coin_economy_core', '資金循環炉', 5, 650, ['coin_final', 'coin_science'], 'buff_coin_economy_core,buff_coin_economy_science'],
+        ['coin_swarm_weapons', '群体火器管制', 6, 820, ['coin_final', 'coin_cooldown'], 'buff_coin_swarm_weapons,buff_coin_swarm_rate'],
+        ['coin_rapid_harvest', '即応収穫', 7, 1000, ['coin_economy_core'], 'buff_coin_rapid_harvest,buff_coin_rapid_income'],
+        ['coin_barrage', '飽和砲撃', 8, 1280, ['coin_swarm_weapons'], 'buff_coin_barrage,buff_coin_barrage_range'],
+        ['coin_fortress', '資金要塞', 9, 1650, ['coin_rapid_harvest', 'coin_barrage'], 'buff_coin_fortress,buff_coin_fortress_slow'],
+        ['coin_overflow', '無限総力戦', 10, 2300, ['coin_fortress'], 'buff_coin_overflow,buff_coin_overflow_missiles,buff_coin_overflow_income']
       ]
     }
   ];
@@ -66,7 +85,13 @@ let savedConfig = (() => {
         ['cp2_drone_supply', 'ドローン配備計画', 1, 80, ['cp2_drone_start'], 'buff_money_instant,buff_discount_drone'],
         ['cp2_drone_speed', '高速航行制御', 2, 140, ['cp2_drone_supply'], 'buff_drone_speed'],
         ['cp2_drone_discount', '量産コスト削減', 3, 240, ['cp2_drone_speed'], 'buff_discount_drone,buff_drone_speed'],
-        ['cp2_drone_master', '自律採掘群', 4, 420, ['cp2_drone_discount'], 'buff_discount_drone,buff_drone_speed,buff_money_instant']
+        ['cp2_drone_master', '自律採掘群', 4, 420, ['cp2_drone_discount'], 'buff_discount_drone,buff_drone_speed,buff_money_instant'],
+        ['cp2_drone_logistics', '自動物流網', 5, 620, ['cp2_drone_master'], 'buff_discount_drone_advanced,buff_drone_logistics,buff_drone_logistics_income'],
+        ['cp2_drone_swarm', '群知能制御', 6, 800, ['cp2_drone_logistics'], 'buff_drone_ai,buff_drone_ai_science'],
+        ['cp2_drone_replicator', '資源複製炉', 7, 1000, ['cp2_drone_swarm'], 'buff_drone_replicator_income,buff_drone_speed'],
+        ['cp2_drone_quantum', '量子採掘管制', 8, 1250, ['cp2_drone_replicator'], 'buff_discount_drone_master,buff_drone_ai_science'],
+        ['cp2_drone_core', '発掘炉心', 9, 1600, ['cp2_drone_quantum'], 'buff_drone_core,buff_drone_core_science'],
+        ['cp2_drone_empire', '自律帝国市場', 10, 2200, ['cp2_drone_core'], 'buff_discount_drone_master,buff_drone_core,buff_drone_empire_income,buff_farm_hp']
       ]
     },
     {
@@ -78,7 +103,13 @@ let savedConfig = (() => {
         ['cp2_tile_trap_supply', 'タイル罠資材調達', 1, 80, ['cp2_tile_trap_start'], 'buff_discount_tile_trap,buff_money_instant'],
         ['cp2_tile_trap_design', '敷設効率化', 2, 140, ['cp2_tile_trap_supply'], 'buff_discount_tile_trap,buff_trap_duration'],
         ['cp2_tile_trap_chemistry', '床面薬剤研究', 3, 240, ['cp2_tile_trap_design'], 'buff_discount_tile_trap,buff_trap_damage'],
-        ['cp2_tile_trap_master', '完全タイル防衛', 4, 420, ['cp2_tile_trap_chemistry'], 'buff_discount_tile_trap,buff_trap_damage,buff_trap_duration']
+        ['cp2_tile_trap_master', '完全タイル防衛', 4, 420, ['cp2_tile_trap_chemistry'], 'buff_discount_tile_trap,buff_trap_damage,buff_trap_duration'],
+        ['cp2_tile_inferno', '床面熱核', 5, 620, ['cp2_tile_trap_master'], 'buff_discount_tile_trap_advanced,buff_tile_inferno,buff_tile_inferno_duration'],
+        ['cp2_tile_corrosion', '腐食性床面', 6, 800, ['cp2_tile_inferno'], 'buff_tile_corrosion,buff_tile_corrosion_slow'],
+        ['cp2_tile_network', '自動敷設網', 7, 1000, ['cp2_tile_corrosion'], 'buff_discount_tile_trap_advanced,buff_tile_network_duration'],
+        ['cp2_tile_zero_escape', '不可避領域', 8, 1250, ['cp2_tile_network'], 'buff_tile_zero_escape,buff_tile_zero_escape_slow'],
+        ['cp2_tile_reactive', '反応式農地', 9, 1600, ['cp2_tile_zero_escape'], 'buff_tile_reactive_farm,buff_tile_network_duration'],
+        ['cp2_tile_absolute', '絶対防衛圏', 10, 2200, ['cp2_tile_reactive'], 'buff_discount_tile_trap_master,buff_tile_absolute,buff_tile_absolute_duration,buff_tile_absolute_slow']
       ]
     }
   ];

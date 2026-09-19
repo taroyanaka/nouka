@@ -1,0 +1,27 @@
+# rename_sprite_sheets.ps1 の既定のリネーム順です。
+# 必要に応じて、1行につき1つの名前（拡張子なし）に置き換えてください。
+outside
+floor
+blocked
+slow
+spawn
+base
+farm
+wall
+lab
+mg
+missile
+trap
+enemy
+drone
+droneSow
+droneWater
+droneHarvest
+droneExcavation
+bullet
+explosion
+trapEffect
+sowEffect
+waterEffect
+harvestEffect
+excavationEffect

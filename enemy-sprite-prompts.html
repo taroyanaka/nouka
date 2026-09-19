@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>敵スプライトシート生成プロンプト</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101820;
+      --panel: #182630;
+      --panel-soft: #20323e;
+      --border: #38515e;
+      --text: #edf6f8;
+      --muted: #a8bdc5;
+      --accent: #69d1b0;
+      --accent-strong: #2fa987;
+      --copied: #f0c866;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px;
+      background: linear-gradient(135deg, #0d151b, var(--bg));
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    main { max-width: 1180px; margin: 0 auto; }
+    h1 { margin: 0 0 8px; font-size: clamp(1.6rem, 3vw, 2.4rem); }
+    h2 { margin: 0; font-size: 1.2rem; }
+    p { margin: 6px 0; }
+    .intro, .enemy-card {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(24, 38, 48, .94);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, .18);
+    }
+    .intro { padding: 20px; margin-bottom: 18px; }
+    .muted { color: var(--muted); }
+    .notice {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-left: 4px solid var(--accent);
+      background: rgba(105, 209, 176, .09);
+      color: #d9f6ed;
+    }
+    .enemy-list { display: grid; gap: 16px; }
+    .enemy-card { overflow: hidden; }
+    .enemy-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px;
+      background: rgba(32, 50, 62, .78);
+      border-bottom: 1px solid var(--border);
+    }
+    .enemy-index { color: var(--accent); font-variant-numeric: tabular-nums; }
+    .file-label {
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: .92rem;
+      overflow-wrap: anywhere;
+    }
+    .enemy-body { padding: 16px 18px 18px; }
+    .description { margin: 0 0 12px; color: #d6e4e7; }
+    .prompt-box {
+      width: 100%;
+      min-height: 310px;
+      resize: vertical;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: #0d161c;
+      color: #e8f3f5;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
+    }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+    button {
+      border: 1px solid #4c7380;
+      border-radius: 8px;
+      padding: 9px 13px;
+      background: #28414d;
+      color: var(--text);
+      cursor: pointer;
+      font: inherit;
+      transition: .16s ease;
+    }
+    button:hover { border-color: var(--accent); background: #315361; }
+    button:focus-visible { outline: 3px solid rgba(105, 209, 176, .4); outline-offset: 2px; }
+    button.copied {
+      border-color: var(--copied);
+      background: rgba(240, 200, 102, .18);
+      color: #ffe8a7;
+    }
+    .copy-status { min-height: 1.5em; color: var(--muted); font-size: .9rem; }
+    code { color: #b9f1df; }
+    @media (max-width: 620px) {
+      body { padding: 12px; }
+      .enemy-header { align-items: flex-start; flex-direction: column; gap: 4px; }
+      .prompt-box { min-height: 380px; }
+      button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="intro">
+      <h1>敵スプライトシート生成プロンプト</h1>
+      <p class="muted">各敵は1枚のPNGに、idle / walk・hit・death・上下左右4方向を収録します。</p>
+      <p class="muted">各カードのプロンプトは共通プロンプト、敵ごとの指定、ネガティブプロンプトを結合済みです。</p>
+      <div class="notice">
+        出力仕様：<code>2048×6144px</code>、アスペクト比<code>1:3</code>、透明PNG、<code>4列×12行</code>、1セル<code>512×512px</code>、合計48セル。各セルの固定ピボットは<code>(256,472)</code>。生成UIの比率設定は<code>Auto</code>を選択し、<code>5:2 Banner</code>は選択しないでください。
+      </div>
+    </section>
+
+    <section id="enemy-list" class="enemy-list" aria-label="敵ごとのプロンプト"></section>
+  </main>
+
+  <script>
+    const commonPrompt = `2Dゲーム用の敵キャラクター・スプライトシートを1枚だけ作成してください。
+
+【最重要】
+- 1回の生成で作成する敵は1種類だけ
+- 1枚の画像に、その敵の全アニメーションを収録する
+- 複数の敵キャラクターを1枚にまとめない
+- 敵の集合画像、敵一覧、比較表、コンセプトシートを作らない
+- 指定された敵以外の人物、敵、動物、建物、武器を描かない
+- 完成したスプライトシート画像だけを出力する
+
+【画像仕様】
+- 画像形式：PNG
+- アスペクト比：1:3（縦長）
+- キャンバスサイズ：2048×6144ピクセル
+- 生成UIで1:3を直接選択できない場合は、比率設定をAutoにする
+- 5:2 Banner、2:3 Poster、1:1 Squareなどのプリセット比率に変更しない
+- 比率設定よりも、2048×6144ピクセルと4列×12行の指定を優先する
+- 完全な透明背景
+- 完全なアルファチャンネル
+- 背景色なし
+- 背景のチェック柄を描かない
+- 4列×12行の正確なグリッド
+- 全48セルを同じサイズにする
+- 1セルのサイズは512×512ピクセル
+- 各セルには対象の敵を1体だけ配置する
+- グリッド線や区切り線は描かない
+- 画像内に文字、数字、ラベル、説明文を入れない
+
+【行の構成】
+1行目：idle / walk、下向き、4フレーム
+2行目：idle / walk、左向き、4フレーム
+3行目：idle / walk、右向き、4フレーム
+4行目：idle / walk、上向き、4フレーム
+5行目：hit、下向き、4フレーム
+6行目：hit、左向き、4フレーム
+7行目：hit、右向き、4フレーム
+8行目：hit、上向き、4フレーム
+9行目：death、下向き、4フレーム
+10行目：death、左向き、4フレーム
+11行目：death、右向き、4フレーム
+12行目：death、上向き、4フレーム
+
+【idle / walk】
+- 4方向それぞれ4フレーム
+- 自然で滑らかな歩行アニメーション
+- 足、腕、武器、衣服を少しずつ動かす
+- 4フレームで自然につながる
+- 待機ポーズを繰り返すだけにしない
+
+【hit】
+- 4方向それぞれ4フレーム
+- 被弾前の姿勢、被弾直後ののけぞり、強いダメージ反応、元の姿勢へ戻る流れ
+- 攻撃モーションや死亡ポーズを混ぜない
+
+【death】
+- 4方向それぞれ4フレーム
+- 立っている状態、崩れ始める状態、倒れる状態、完全に倒れた状態または消滅直前の状態
+- 立ち姿だけを繰り返さない
+
+【キャラクターの統一】
+全48フレームで、同じ敵キャラクター、顔、体格、衣装、武器、防具、配色、シルエット、視点、画角、縮尺、中心位置、足元の位置、セル内の余白を完全に維持する。
+敵の全身を各セル内に収め、頭、腕、足、武器、盾、帽子、マント、馬などをセルの外へはみ出させない。
+
+【フレーム間の位置固定・最重要】
+- これはゲームでそのまま4列アニメーション再生する画像なので、フレームごとにキャラクター全体を再配置しない
+- 各512×512セルのゲーム内固定ピボットを、セル座標の x=256、y=472 に置く
+- 人型の敵は、両足の接地点または足元の中心を固定ピボットに合わせる
+- 馬や大型の敵は、胴体のルート位置と地面への接地点を固定ピボットに合わせる
+- 48セルすべてで、固定ピボットのx座標と接地線のy座標を完全に同じにする
+- idle / walkでは、足元の接地線と胴体のルート位置を動かさず、腕・脚・武器・衣服だけを動かす
+- hitでは、固定ピボットを維持したまま上半身をのけぞらせる。敵全体を横や上下へ移動させない
+- deathでは、固定ピボットと接地線を維持したまま、その場で崩れたり倒れたりする。倒れた後もセル中央へ再配置しない
+- 見た目の外接矩形を各フレームで中央揃えしない。キャラクターの外接矩形が変化しても、固定ピボットを優先する
+- 各セルに同じ下余白・左右余白を確保し、フレームごとの自動トリミングや自動リサイズを行わない
+- 武器、盾、マント、エフェクトが左右へ伸びても、胴体と足元の固定位置を引っ張って移動させない
+
+【方向】
+- 1行につき1方向だけを描く
+- 行の途中で向きを変えない
+- 下向き、左向き、右向き、上向きを明確に描き分ける
+- 左右の装備位置が異なる場合、単純な左右反転にしない
+- 4方向すべてで同じキャラクターデザインを維持する
+
+【見た目】
+- 見やすい2Dゲーム用ピクセルアート
+- 小さく表示しても敵の種類が判別できる明確なシルエット
+- 輪郭をはっきりさせる
+- フレーム間で形状を崩さない
+- 透明背景との境界を明確にする
+- 過剰なエフェクトを使用しない
+- 敵本体を確認できる状態にする
+
+【出力条件】
+- 1枚のPNG画像だけを出力する
+- 2048×6144ピクセル
+- 4列×12行、合計48セル
+- 1セル512×512ピクセル
+- 完全な透明背景
+- チェック柄を背景として描かない`;
+
+    const negativePrompt = `【Negative prompt】
+フレームごとの自動トリミング、フレームごとのバウンディングボックス中央寄せ、フレームごとの自動リサイズ、キャラクター全体の左右移動、キャラクター全体の上下移動、足元の基準線のずれ、接地点のずれ、固定ピボットのずれ、胴体のルート位置のずれ、セル内余白の変化、浮遊、沈み込み、歩行中の瞬間移動、武器や盾に引っ張られた全身移動、複数の敵、複数キャラクター、敵の集合画像、敵一覧、キャラクター比較表、コンセプトシート、ターンアラウンドシート、全種類の敵を1枚にまとめる、別種類の敵の混在、指定外の人物、指定外の敵、動物、建物、背景オブジェクト、背景、白背景、黒背景、色付き背景、透明風チェック柄、チェッカーボード模様、不透明背景、背景イラスト、風景、床、地面、グリッド線、区切り線、枠線、セル境界線、文字、数字、価格、ロゴ、透かし、説明文、ラベル、UI、ボタン、タイトル、ファイル名、低品質、ぼやけた画像、粗い輪郭、歪んだ形状、フレームごとのデザイン変更、顔の変化、体格の変化、装備の変化、色の変化、視点の変化、縮尺の変化、中心位置のずれ、セルからのはみ出し、対象の重なり、対象の切断、欠けた手足、欠けた武器、異なるセルサイズ、不均一な余白、4列×12行グリッドの崩れ、48セル未満、48セル超過、フレーム数不足、フレームの重複、行ごとの向きの混在、上下左右の向きの間違い、idleとhitの混在、hitとdeathの混在、立ち姿だけの繰り返し、死亡ポーズだけの繰り返し、過剰な煙、過剰な炎、過剰な爆発、アンチエイリアス、ぼやけたエッジ、アルファチャンネルの欠落、JPG、JPEG`;
+
+    const enemies = [
+      { name: 'Peasant / 農民', file: 'peasant.png', description: '粗末な茶色の作業着、布の帽子、簡素なブーツ、小さな鎌または鍬を持つ弱そうな農民。防具はなく、基本的な低脅威の敵。' },
+      { name: 'Adventurer / 冒険者', file: 'adventurer.png', description: '革のベスト、旅行用マント、小さなリュック、ブーツ、短剣または短剣を装備した軽装のファンタジー冒険者。' },
+      { name: 'Warrior / 戦士', file: 'warrior.png', description: '中程度の金属防具、革のベルト、肩当て、片手剣を装備した屈強な戦士。' },
+      { name: 'Thief / シーフ', file: 'thief.png', description: '暗色の軽装、フード、顔を覆う布、二刀の短剣を装備した細身で素早そうな盗賊。' },
+      { name: 'Horseman / 騎兵', file: 'horseman.png', description: '小型の装甲馬に乗り、槍を持った騎兵。馬と騎手の全身を各セル内に収める。' },
+      { name: 'Knight / 騎士', file: 'knight.png', description: 'フルプレートアーマー、閉じた兜、大きな肩当て、長剣と盾を装備した重装騎士。' },
+      { name: 'Brute / ブルート', file: 'brute.png', description: '非常に大柄で筋肉質。粗末な重装甲、金属板、鎖、大きな棍棒を装備した巨大な敵。' },
+      { name: 'Showcase Titan / ショーケース用超高耐久兵', file: 'showcase_titan.png', description: '巨大な重装甲、発光するエネルギーコア、大型の肩当て、巨大な武器を持つボス級の巨人。' },
+      { name: 'Priest / 僧侶', file: 'priest.png', description: '長い儀式用ローブ、フードまたは司祭帽、光る杖を持つ回復系のファンタジー僧侶。' },
+      { name: 'Drummer / ドラマー', file: 'drummer.png', description: '軍装風の服、革の防具、大太鼓、バチを装備した支援役。四方向すべてで太鼓を明確に見せる。' },
+      { name: 'Shieldmaster / シールドマスター', file: 'shieldmaster.png', description: '非常に大きな盾、重装甲、短い武器を装備した防御特化の重装兵。盾を四方向から明確に見せる。' },
+      { name: 'Speed Wizard / 魔法使い（移動速度）', file: 'wizard_speed.png', description: '軽いローブ、青またはシアン色の魔法装飾、杖またはロッド、風や速度を表す魔法のエフェクトを持つ魔法使い。' },
+      { name: 'Attack Wizard / 魔法使い（攻撃速度）', file: 'wizard_attack.png', description: '暗色のローブ、赤またはオレンジ色の魔法装飾、攻撃魔法の弾が周囲を回る杖を持つ攻撃型魔法使い。' },
+      { name: 'Healing Wizard / 魔法使い（回復）', file: 'wizard_heal.png', description: '淡い色のローブ、緑または金色の魔法装飾、発光する回復結晶付きの杖を持つ回復型魔法使い。' }
+    ];
+
+    function buildPrompt(enemy) {
+      return `${commonPrompt}\n\n【対象の敵】\n${enemy.name}\n\n【対象の外見】\n${enemy.description}\n\n【この生成で守る追加条件】\nこのスプライトシートには「${enemy.name}」だけを描いてください。\nこの1枚の画像に、idle / walk、hit、deathの全アニメーションを収録してください。\n他の敵キャラクターは絶対に描かないでください。\n出力ファイル名は「${enemy.file}」です。\n\n${negativePrompt}`;
+    }
+
+    function createCard(enemy, index) {
+      const card = document.createElement('article');
+      card.className = 'enemy-card';
+      card.innerHTML = `
+        <div class="enemy-header">
+          <div><span class="enemy-index">${String(index + 1).padStart(2, '0')}</span>　<h2 style="display:inline">${enemy.name}</h2></div>
+          <div class="file-label">${enemy.file}</div>
+        </div>
+        <div class="enemy-body">
+          <p class="description">${enemy.description}</p>
+          <textarea class="prompt-box" readonly aria-label="${enemy.name}の生成プロンプト"></textarea>
+          <div class="actions">
+            <button type="button" data-copy="prompt">プロンプトをコピー</button>
+            <button type="button" data-copy="filename">ファイル名をコピー</button>
+          </div>
+          <p class="copy-status" aria-live="polite"></p>
+        </div>`;
+
+      const textarea = card.querySelector('.prompt-box');
+      textarea.value = buildPrompt(enemy);
+      const status = card.querySelector('.copy-status');
+      card.querySelector('[data-copy="prompt"]').addEventListener('click', async (event) => {
+        await copyText(textarea.value, event.currentTarget, status, 'プロンプト');
+      });
+      card.querySelector('[data-copy="filename"]').addEventListener('click', async (event) => {
+        await copyText(enemy.file, event.currentTarget, status, 'ファイル名');
+      });
+      return card;
+    }
+
+    async function copyText(value, button, status, label) {
+      try {
+        await navigator.clipboard.writeText(value);
+      } catch (error) {
+        const fallback = document.createElement('textarea');
+        fallback.value = value;
+        fallback.style.position = 'fixed';
+        fallback.style.opacity = '0';
+        document.body.appendChild(fallback);
+        fallback.select();
+        document.execCommand('copy');
+        fallback.remove();
+      }
+      button.classList.add('copied');
+      const original = button.textContent;
+      button.textContent = '✓ コピー済み';
+      status.textContent = `${label}をコピーしました。`;
+      window.setTimeout(() => {
+        button.classList.remove('copied');
+        button.textContent = original;
+      }, 1800);
+    }
+
+    const list = document.querySelector('#enemy-list');
+    enemies.forEach((enemy, index) => list.appendChild(createCard(enemy, index)));
+  </script>
+</body>
+</html>

@@ -1,22 +1,52 @@
 param(
-    [string]$NamesFile = (Join-Path $PSScriptRoot 'sprite-names.txt'),
+    [string]$NamesFile,
     [switch]$WhatIf
 )
 
 $ErrorActionPreference = 'Stop'
 $imageExtensions = @('.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp')
-
-if (-not (Test-Path -LiteralPath $NamesFile -PathType Leaf)) {
-    throw "名前一覧ファイルが見つかりません: $NamesFile"
-}
+$defaultNames = @(
+    'outside'
+    'floor'
+    'blocked'
+    'slow'
+    'spawn'
+    'base'
+    'farm'
+    'wall'
+    'lab'
+    'mg'
+    'missile'
+    'trap'
+    'enemy'
+    'drone'
+    'droneSow'
+    'droneWater'
+    'droneHarvest'
+    'droneExcavation'
+    'bullet'
+    'explosion'
+    'trapEffect'
+    'sowEffect'
+    'waterEffect'
+    'harvestEffect'
+    'excavationEffect'
+)
 
 $files = @(Get-ChildItem -LiteralPath $PSScriptRoot -File |
     Where-Object { $imageExtensions -contains $_.Extension.ToLowerInvariant() } |
     Sort-Object Name)
 
-$names = @(Get-Content -LiteralPath $NamesFile -Encoding UTF8 |
-    ForEach-Object { $_.Trim() } |
-    Where-Object { $_ -and -not $_.StartsWith('#') })
+if ([string]::IsNullOrWhiteSpace($NamesFile)) {
+    $names = $defaultNames
+} else {
+    if (-not (Test-Path -LiteralPath $NamesFile -PathType Leaf)) {
+        throw "名前一覧ファイルが見つかりません: $NamesFile"
+    }
+    $names = @(Get-Content -LiteralPath $NamesFile -Encoding UTF8 |
+        ForEach-Object { $_.Trim() } |
+        Where-Object { $_ -and -not $_.StartsWith('#') })
+}
 
 if ($files.Count -eq 0) {
     Write-Host '対象画像がありません。'

@@ -1,6 +1,27 @@
-# 1行につき1つの新しい名前を指定します（拡張子は不要です）。
-# フォルダ内の画像をファイル名順に並べ、1行目から順に対応させます。
-# 例:
-# player_idle
-# player_walk_01
-# player_walk_02
+# rename_sprite_sheets.ps1 の既定のリネーム順です。
+# 必要に応じて、1行につき1つの名前（拡張子なし）に置き換えてください。
+outside
+floor
+blocked
+slow
+spawn
+base
+farm
+wall
+lab
+mg
+missile
+trap
+enemy
+drone
+droneSow
+droneWater
+droneHarvest
+droneExcavation
+bullet
+explosion
+trapEffect
+sowEffect
+waterEffect
+harvestEffect
+excavationEffect

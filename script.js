@@ -1,11 +1,11 @@
-const CONFIG={gridCols:15,gridRows:30,maxWave:10,initialMoney:501,blockedTileSpawnRate:.15,waveSpawnInterval:180,waveDensityMultiplier:1.25,slowTileEffect:.5,costFarm:150,costWall:10,costLab:250,costSlow:50,costMG:100,costMissile:200,costDrone:150,cropSellValue:2,cropGrowSpeed:.3,droneBaseSpeed:.4,mgDamage:12,mgRange:3.5,mgCooldown:17,missileDamage:19,missileRange:8,missileCooldown:33,missileSplashRadius:3.2,enemyBaseHp:50,enemyBaseSpeed:1.2,enemyBaseDamage:8,enemyBaseCount:15,runnerEnemyHp:20,runnerEnemySpeed:2.2,runnerEnemyDamage:5,tankEnemyHp:220,tankEnemySpeed:1,tankEnemyDamage:25};
+const CONFIG={gridCols:15,gridRows:30,maxWave:10,initialMoney:501,blockedTileSpawnRate:.15,waveSpawnInterval:180,waveDensityMultiplier:1.25,slowTileEffect:.5,costFarm:150,costLab:250,costSlow:50,costMG:100,costMissile:200,costDrone:150,cropSellValue:2,cropGrowSpeed:3,droneBaseSpeed:1.6,mgDamage:12,mgRange:3.5,mgCooldown:17,missileDamage:19,missileRange:8,missileCooldown:33,missileSplashRadius:3.2,enemyBaseHp:50,enemyBaseSpeed:1.2,enemyBaseDamage:8,enemyBaseCount:15,runnerEnemyHp:20,runnerEnemySpeed:2.2,runnerEnemyDamage:5,tankEnemyHp:220,tankEnemySpeed:1,tankEnemyDamage:25};
 let currentDifficultyLevel=1,activeDifficultyLevel=1;
 const DIFFICULTY_KEYS=['initialMoney'];
 const DIFFICULTY_WAVE_KEYS=[];
-const BUILDING_COST_KEYS=Object.freeze({farm:'costFarm',wall:'costWall',lab:'costLab',slow:'costSlow',mg:'costMG',missile:'costMissile'});
+const BUILDING_COST_KEYS=Object.freeze({farm:'costFarm',lab:'costLab',slow:'costSlow',mg:'costMG',missile:'costMissile'});
 function normalizeDifficultyLevel(level){return Math.max(1,Math.min(5,Math.floor(Number(level)||1)))}
 function buildingCostKey(type){return BUILDING_COST_KEYS[type]}
-function buildingUpgradeBaseCost(type){return CONFIG[type==='mg'?'costMG':type==='missile'?'costMissile':type==='lab'?'costLab':'costWall']}
+function buildingUpgradeBaseCost(type){return CONFIG[type==='mg'?'costMG':type==='missile'?'costMissile':type==='lab'?'costLab':'costFarm']}
 function droneCount(type){return drones.filter(drone=>drone.type===type).length}
 function regulationDifficulty(level=currentDifficultyLevel){const r=activeRegulation();return r?.difficulties?.[normalizeDifficultyLevel(level)]||null}
 function difficultyConfig(){return regulationDifficulty(activeDifficultyLevel)||{initialMoney:CONFIG.initialMoney,waves:{}}}
@@ -71,7 +71,7 @@ const DEFAULT_TECH_TREES=[
  ]}
 ];
 let TECH_TREES=structuredClone(DEFAULT_TECH_TREES),activeTreeId='standard';
-const EXCAVATION_DRONE_CONFIG={baseSpeed:.25,dropIntervalMin:180,dropIntervalMax:420,excavateChance:.65,moneyMin:20,moneyMax:100,scienceMin:2,scienceMax:12,buffDropChance:.25,buffDropCount:1};
+const EXCAVATION_DRONE_CONFIG={baseSpeed:1,dropIntervalMin:180,dropIntervalMax:420,excavateChance:.65,moneyMin:20,moneyMax:100,scienceMin:2,scienceMax:12,buffDropChance:.25,buffDropCount:1};
 // Enemy definitions are data-driven so names, stats, abilities, and wave counts
 // can be edited without adding a new enemy class.
 const ENEMY_DEFINITIONS={
@@ -96,24 +96,42 @@ const defaultDifficulties=()=>Object.fromEntries(Array.from({length:5},(_,i)=>[i
 let REGULATIONS=[{id:'standard',name:'標準設定',difficulties:defaultDifficulties(),techTrees:structuredClone(DEFAULT_TECH_TREES)}];
 let activeRegulationId='standard';
 function activeRegulation(){return REGULATIONS.find(r=>r.id===activeRegulationId)||REGULATIONS[0]}
-function applyActiveRegulation(){const r=activeRegulation();if(!r)return;TECH_TREES=structuredClone(r.techTrees||DEFAULT_TECH_TREES);activeTreeId=TECH_TREES[0]?.id||'standard';if(r.trapIcons)Object.entries(r.trapIcons).forEach(([id,icon])=>{if(TRAP_DEFINITIONS[id])TRAP_DEFINITIONS[id].icon=icon})}
+function applyActiveRegulation(){const r=activeRegulation();if(!r)return;TECH_TREES=structuredClone(r.techTrees||DEFAULT_TECH_TREES);activeTreeId=TECH_TREES[0]?.id||'standard';if(r.CONFIG)Object.assign(CONFIG,structuredClone(r.CONFIG));if(r.cropGrowSpeed!==undefined)CONFIG.cropGrowSpeed=Number(r.cropGrowSpeed);if(r.droneBaseSpeed!==undefined)CONFIG.droneBaseSpeed=Number(r.droneBaseSpeed);if(r.trapIcons)Object.entries(r.trapIcons).forEach(([id,icon])=>{if(TRAP_DEFINITIONS[id])TRAP_DEFINITIONS[id].icon=icon})}
 const GAME_TEST_MODE=window.__TEST_MODE__===true;
 // The playfield is intentionally landscape: enemies enter at the left edge and move right.
 CONFIG.gridCols=30;CONFIG.gridRows=15;
 const GAME_SPEED_OPTIONS=[1,2,4,8,16];
 const TEST_RUNTIME={enabled:GAME_TEST_MODE,frame:0,random:null,tasks:[]};
-const $=id=>document.getElementById(id),canvas=$('gameCanvas'),ctx=canvas.getContext('2d');let tile=24,grid=[],farms=[],buildings=[],drones=[],enemies=[],bullets=[],effects=[],trapEngine=null,money=0,science=0,wave=0,inWave=false,spawning=false,selected=null,buildMode='select',lineDirection='down',buffs={},techs={},last=0,spawnTimer,gameSpeed=1;
-lineDirection='right';
+const $=id=>document.getElementById(id),canvas=$('gameCanvas'),ctx=canvas.getContext('2d');let tile=24,grid=[],farms=[],buildings=[],drones=[],enemies=[],bullets=[],effects=[],trapEngine=null,money=0,science=0,wave=0,inWave=false,spawning=false,selected=null,buildMode='select',lineDirection='right',buffs={},techs={},last=0,spawnTimer,gameSpeed=1;
+const LINE_DIRECTIONS=Object.freeze([{value:'up',label:'上',icon:'⬆'},{value:'down',label:'下',icon:'⬇'},{value:'left',label:'左',icon:'⬅'},{value:'right',label:'右',icon:'➡'}]);
+const lineBuildDirections=Object.create(null);
+function lineDirectionFor(trapId){return lineBuildDirections[trapId]||'right'}
+function refreshLineDirectionButtons(){
+  document.querySelectorAll('#build-grid [data-line-trap]').forEach(button=>{
+    const trapId=button.dataset.lineTrap;
+    button.classList.toggle('active',button.dataset.lineDirection===lineDirectionFor(trapId));
+  });
+}
+function selectLineDirection(trapId,direction){
+  if(!LINE_DIRECTIONS.some(option=>option.value===direction)||!TRAP_DEFINITIONS?.[trapId])return;
+  lineBuildDirections[trapId]=direction;
+  lineDirection=direction;
+  setBuildMode(trapId);
+  refreshLineDirectionButtons();
+}
 function setBuildMode(mode){
   buildMode=mode;
-  let panel=$('line-direction-panel');
-  if(!panel){
-    panel=document.createElement('div');panel.id='line-direction-panel';panel.innerHTML='<label for="line-direction">ライン罠の作動方向</label><select id="line-direction"><option value="up">⬆ 上</option><option value="down">⬇ 下</option><option value="left">⬅ 左</option><option value="right">➡ 右</option></select>';
-    document.querySelector('#sidebar .top-actions')?.after(panel);
-    $('line-direction').onchange=e=>{lineDirection=e.target.value};
-  }
-  panel.hidden=!TRAP_DEFINITIONS[mode]||TRAP_DEFINITIONS[mode].type!=='line';
-  const select=$('line-direction');if(select)select.value=lineDirection;
+  if(canvas)canvas.style.cursor=mode==='remove'?'pointer':'crosshair';
+  const definition=TRAP_DEFINITIONS?.[mode];
+  if(definition?.type==='line')lineDirection=lineBuildDirections[mode]??=lineDirectionFor(mode);
+  $('line-direction-panel')?.remove();
+  const selectButton=$('btn-select-mode');if(selectButton)selectButton.classList.toggle('active',mode==='select');
+  document.querySelectorAll('#build-grid [data-build]').forEach(button=>{
+    const active=button.dataset.build===mode;
+    button.classList.toggle('active',active);
+    button.setAttribute('aria-pressed',String(active));
+  });
+  refreshLineDirectionButtons();
 }
 document.addEventListener('click',event=>{const button=event.target.closest?.('#build-grid [data-build]');if(button)setBuildMode(button.dataset.build);if(event.target.closest?.('#btn-select-mode'))setBuildMode('select')});
 function normalizeGameSpeed(value){const n=Number(value);return GAME_SPEED_OPTIONS.includes(n)?n:1}
@@ -121,17 +139,20 @@ function setGameSpeed(value){gameSpeed=normalizeGameSpeed(value);const control=$
 function gameRandom(){return TEST_RUNTIME.random?TEST_RUNTIME.random():Math.random()}
 function scheduleGameTask(callback,delayMs){if(!GAME_TEST_MODE)return setTimeout(callback,delayMs);TEST_RUNTIME.tasks.push({callback,frames:Math.max(0,Math.ceil(Number(delayMs||0)/15))});return null}
 function runTestTasks(){for(const task of TEST_RUNTIME.tasks)task.frames--;const ready=TEST_RUNTIME.tasks.filter(task=>task.frames<=0);TEST_RUNTIME.tasks=TEST_RUNTIME.tasks.filter(task=>task.frames>0);ready.forEach(task=>task.callback())}
-const colors={farm:'#64c987',wall:'#798c96',lab:'#be76dc',mg:'#e6b84f',missile:'#e87555',slow:'#6d75d9',blocked:'#34444b'};let pointerDown=false,lastPaintTile='';let TRAP_DEFINITIONS=structuredClone(window.DEFAULT_TRAPS);
+const colors={farm:'#64c987',lab:'#be76dc',mg:'#e6b84f',missile:'#e87555',slow:'#6d75d9',blocked:'#34444b'};let pointerDown=false,lastPaintTile='';let TRAP_DEFINITIONS=structuredClone(window.DEFAULT_TRAPS);
 // sx/sy are 1-based source-pixel coordinates.  (1, 1) is the image's top-left pixel.
 const SPRITE_DEFAULT={uri:'',sx:1,sy:1,sw:24,sh:24,width:24,height:24,pivotX:.5,pivotY:.5,frames:1,columns:0,rows:0,frameDuration:8,flipByDirection:false,alignVisibleFrames:false,fallback:'shape'};
 const SPRITE_SHEET_4X4=(uri,overrides={})=>({...SPRITE_DEFAULT,uri,frames:16,columns:4,rows:4,...overrides});
+const SPRITE_SHEET_12X12=(uri,overrides={})=>({...SPRITE_DEFAULT,uri,frames:144,columns:12,rows:12,frameDuration:6,...overrides});
+const SPRITE_SHEET_12X6=(uri,overrides={})=>({...SPRITE_DEFAULT,uri,frames:72,columns:12,rows:6,frameDuration:6,...overrides});
+const SPRITE_SHEET_6X6=(uri,overrides={})=>({...SPRITE_DEFAULT,uri,frames:36,columns:6,rows:6,frameDuration:6,...overrides});
 const SPRITE_CONFIG={
  outside:{...SPRITE_DEFAULT},floor:{...SPRITE_DEFAULT},blocked:SPRITE_SHEET_4X4('sprite_sheets/blocked.png'),slow:SPRITE_SHEET_4X4('sprite_sheets/slow.png'),spawn:{...SPRITE_DEFAULT},base:{...SPRITE_DEFAULT},excavation:{...SPRITE_DEFAULT},
- farm:{...SPRITE_DEFAULT},wall:{...SPRITE_DEFAULT},lab:{...SPRITE_DEFAULT},mg:{...SPRITE_DEFAULT},missile:{...SPRITE_DEFAULT},
+ farm:SPRITE_SHEET_12X12('sprite_sheets/farm.png'),lab:SPRITE_SHEET_12X12('sprite_sheets/lab.png'),mg:SPRITE_SHEET_12X12('sprite_sheets/mg.png'),missile:SPRITE_SHEET_12X12('sprite_sheets/missile.png'),
  trap:SPRITE_SHEET_4X4('sprite_sheets/trap.png'),
  enemy:SPRITE_SHEET_4X4('sprite_sheets/enemy.png',{frames:48,columns:4,rows:12,alignVisibleFrames:true}),
  enemy_peasant:{...SPRITE_DEFAULT},enemy_adventurer:{...SPRITE_DEFAULT},enemy_warrior:{...SPRITE_DEFAULT},enemy_thief:{...SPRITE_DEFAULT},enemy_horseman:{...SPRITE_DEFAULT},enemy_knight:{...SPRITE_DEFAULT},enemy_brute:{...SPRITE_DEFAULT},enemy_showcase_titan:{...SPRITE_DEFAULT},enemy_priest:{...SPRITE_DEFAULT},enemy_drummer:{...SPRITE_DEFAULT},enemy_shieldmaster:{...SPRITE_DEFAULT},enemy_wizard_speed:{...SPRITE_DEFAULT},enemy_wizard_attack:{...SPRITE_DEFAULT},enemy_wizard_heal:{...SPRITE_DEFAULT},
- drone:{...SPRITE_DEFAULT},droneSow:SPRITE_SHEET_4X4('sprite_sheets/droneSow.jpg'),droneWater:SPRITE_SHEET_4X4('sprite_sheets/droneWater.png'),droneHarvest:SPRITE_SHEET_4X4('sprite_sheets/droneHarvest.png'),droneExcavation:SPRITE_SHEET_4X4('sprite_sheets/droneExcavation.png'),
+ drone:SPRITE_SHEET_4X4('sprite_sheets/drone.png'),droneSow:SPRITE_SHEET_4X4('sprite_sheets/droneSow.png'),droneWater:SPRITE_SHEET_4X4('sprite_sheets/droneWater.png'),droneHarvest:SPRITE_SHEET_4X4('sprite_sheets/droneHarvest.png'),droneExcavation:SPRITE_SHEET_4X4('sprite_sheets/droneExcavation.png'),
  bullet:{...SPRITE_DEFAULT},bulletMG:{...SPRITE_DEFAULT},bulletMissile:{...SPRITE_DEFAULT},explosion:SPRITE_SHEET_4X4('sprite_sheets/explosion.png'),trapEffect:{...SPRITE_DEFAULT},sowEffect:{...SPRITE_DEFAULT},waterEffect:{...SPRITE_DEFAULT},harvestEffect:{...SPRITE_DEFAULT},excavationEffect:{...SPRITE_DEFAULT}
 };
  const ENEMY_SPRITE_LAYOUT=Object.freeze({columns:4,framesPerDirection:4,stateRows:Object.freeze({idle:0,hit:4,death:8}),directionRows:Object.freeze({down:0,left:1,right:2,up:3}),frameDuration:16,hitDuration:16,deathDuration:64,displayScale:2});
@@ -141,7 +162,10 @@ function loadSprite(uri){if(!uri)return null;if(SPRITE_IMAGES.has(uri))return SP
 function spriteSourceGrid(definition,state,frameCount){const columns=Math.max(1,Math.floor(Number(definition.columns)||frameCount)),rows=Math.max(1,Math.floor(Number(definition.rows)||Math.ceil(frameCount/columns))),imageWidth=Number(state.naturalWidth)||Number(state.image?.naturalWidth)||Number(definition.sw)||24,imageHeight=Number(state.naturalHeight)||Number(state.image?.naturalHeight)||Number(definition.sh)||24;return {columns,rows,cellWidth:imageWidth/columns,cellHeight:imageHeight/rows}}
 function spriteFrameAlignments(definition,state,frameCount,sourceGrid){if(!definition.alignVisibleFrames||typeof document==='undefined')return null;const cacheKey=`${sourceGrid.columns}x${sourceGrid.rows}:${sourceGrid.cellWidth}x${sourceGrid.cellHeight}:${Number(definition.sx||1)}:${Number(definition.sy||1)}:${frameCount}`;if(state.alignmentCache.has(cacheKey))return state.alignmentCache.get(cacheKey);const width=Math.max(1,Math.ceil(sourceGrid.cellWidth)),height=Math.max(1,Math.ceil(sourceGrid.cellHeight)),measureCanvas=document.createElement('canvas');measureCanvas.width=width;measureCanvas.height=height;const measureCtx=measureCanvas.getContext('2d',{willReadFrequently:true});if(!measureCtx){state.alignmentCache.set(cacheKey,null);return null}measureCtx.imageSmoothingEnabled=false;const alignments=[];try{for(let frame=0;frame<frameCount;frame++){measureCtx.clearRect(0,0,width,height);const sx=Math.max(0,Number(definition.sx||1)-1)+(frame%sourceGrid.columns)*sourceGrid.cellWidth,sy=Math.max(0,Number(definition.sy||1)-1)+Math.floor(frame/sourceGrid.columns)*sourceGrid.cellHeight;measureCtx.drawImage(state.image,sx,sy,sourceGrid.cellWidth,sourceGrid.cellHeight,0,0,width,height);const pixels=measureCtx.getImageData(0,0,width,height).data;let minX=width,minY=height,maxX=-1,maxY=-1;for(let y=0;y<height;y++)for(let x=0;x<width;x++)if(pixels[(y*width+x)*4+3]>8){if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y}alignments.push(maxX<0?null:{pivotX:(minX+maxX+1)/(width*2),pivotY:(minY+maxY+1)/(height*2)})}}catch(error){state.alignmentCache.set(cacheKey,null);return null}state.alignmentCache.set(cacheKey,alignments);return alignments}
 function drawSprite(key,x,y,options={}){const d=spriteDefinition(key,options.definition),state=loadSprite(d.uri);if(!state?.ready)return false;const frameCount=Math.max(1,Math.floor(Number(d.frames)||1)),requestedFrame=Number(options.frameIndex),frame=Number.isFinite(requestedFrame)?Math.max(0,Math.floor(requestedFrame))%frameCount:Math.max(0,Math.floor((TEST_RUNTIME.frame||0)/Math.max(1,Number(d.frameDuration)||1))%frameCount),sourceGrid=spriteSourceGrid(d,state,frameCount),frameAlignment=spriteFrameAlignments(d,state,frameCount,sourceGrid)?.[frame],sx=Math.max(0,Number(d.sx||1)-1)+(frame%sourceGrid.columns)*sourceGrid.cellWidth,sy=Math.max(0,Number(d.sy||1)-1)+Math.floor(frame/sourceGrid.columns)*sourceGrid.cellHeight,w=Number(d.width)||tile,h=Number(d.height)||tile,pivotX=frameAlignment?.pivotX??Number(d.pivotX??.5),pivotY=frameAlignment?.pivotY??Number(d.pivotY??.5);ctx.save();ctx.translate(x,y);if(Number.isFinite(Number(options.rotation)))ctx.rotate(Number(options.rotation));if(options.flip&&d.flipByDirection)ctx.scale(-1,1);ctx.drawImage(state.image,sx,sy,sourceGrid.cellWidth,sourceGrid.cellHeight,-w*pivotX,-h*pivotY,w,h);ctx.restore();return true}
-function drawProjectileSprite(type,x,y,options={}){const key=type==='missile'?'bulletMissile':'bulletMG';const legacy=type==='missile'?SPRITE_CONFIG.missile:SPRITE_CONFIG.bullet;const definition=SPRITE_CONFIG[key]?.uri?SPRITE_CONFIG[key]:legacy;return drawSprite(key,x,y,{...options,definition})}
+function cellSpriteDefinition(key,definition={}){return {...spriteDefinition(key,definition),width:tile,height:tile}}
+function drawCellSprite(key,x,y,options={}){return drawSprite(key,x,y,{...options,definition:cellSpriteDefinition(key,options.definition)})}
+function drawCellFallback(type,gx,gy){ctx.fillStyle=colors[type]||'#798c96';ctx.fillRect(gx*tile,gy*tile,tile,tile)}
+function drawProjectileSprite(type,x,y,options={}){const key=type==='missile'?'bulletMissile':'bulletMG';const definition=SPRITE_CONFIG[key];if(!definition?.uri)return false;return drawSprite(key,x,y,{...options,definition})}
 function enemySpriteKey(type){return `enemy_${String(type||'').replace(/[^a-zA-Z0-9_-]/g,'_')}`}
 function enemySpriteTarget(type){
   const key=enemySpriteKey(type);
@@ -205,6 +229,82 @@ function drawEnemySprite(enemy){
   }
   return false;
  }
+const DIRECTION_ANGLES=Object.freeze({right:0,down:Math.PI/2,left:Math.PI,up:-Math.PI/2});
+function directionFromVector(dx,dy, fallback='right'){
+  if(Math.abs(dx)<.001&&Math.abs(dy)<.001)return fallback;
+  return Math.abs(dx)>=Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down');
+}
+// Turret art is side-facing only.  Keep its aim on the horizontal axis so an
+// enemy above or below it does not rotate the sprite into an unsupported pose.
+function turretDirectionFromVector(dx, fallback='right'){
+  if(Math.abs(dx)<.001)return fallback==='left'?'left':'right';
+  return dx<0?'left':'right';
+}
+function directionAngle(direction){return DIRECTION_ANGLES[direction]??DIRECTION_ANGLES.right}
+function buildingIsActive(building){
+  if(!building)return false;
+  const type=building.type||'farm';
+  if(type==='farm')return Number(building.state)>0;
+  if(type==='lab')return !!inWave;
+  if(type==='mg'||type==='missile')return Number(building.activeTimer)>0;
+  return false;
+}
+function buildingSpriteFrameIndex(building,definition){
+  const columns=Math.max(1,Math.floor(Number(definition.columns)||12));
+  const level=Math.max(1,Math.min(6,Math.floor(Number(building?.level)||1)));
+  const row=(buildingIsActive(building)?6:0)+(level-1);
+  const frame=Math.floor((Number(TEST_RUNTIME.frame)||0)/Math.max(1,Number(definition.frameDuration)||6))%columns;
+  return row*columns+frame;
+}
+function drawBuildingSprite(building){
+  const type=building?.type||'farm';
+  const definition=cellSpriteDefinition(type);
+  if(Number(definition.frames||0)<144||Number(definition.columns||0)<12||Number(definition.rows||0)<12)return false;
+  const options={definition,frameIndex:buildingSpriteFrameIndex(building,definition)};
+  if(type==='mg'||type==='missile'){
+    options.flip=building.facing==='left';
+    options.definition.flipByDirection=true;
+  }
+  return drawCellSprite(type,building.gx*tile+tile/2,building.gy*tile+tile/2,options);
+}
+function droneSpriteRow(drone,definition={}){
+  const columns=Math.max(1,Math.floor(Number(definition.columns)||4));
+  const rows=Math.max(1,Math.floor(Number(definition.rows)||4));
+  if(columns>=6&&rows>=6){
+    if(drone?.spriteState==='working')return 5;
+    if(drone?.spriteState==='moving')return {up:1,down:2,left:3,right:4}[drone.facing]??2;
+  }
+  return drone?.spriteState==='working'?1:0;
+}
+function droneSpriteFrameIndex(drone,definition){
+  const columns=Math.max(1,Math.floor(Number(definition.columns)||4));
+  const rows=Math.max(1,Math.floor(Number(definition.rows)||4));
+  const directionalSheet=Number(definition.frames||0)>=36&&columns>=6&&Number(definition.rows||0)>=6;
+  const frameCount=Math.max(1,Math.floor(Number(definition.frames)||columns));
+  const animationFrame=Math.floor((Number(TEST_RUNTIME.frame)||0)/Math.max(1,Number(definition.frameDuration)||6))%(directionalSheet?columns:frameCount);
+  // The current drone sheets are 4x4: row 1 is movement, rows 2-3 are
+  // the two-part working animation, and row 4 is intentionally unused.
+  if(frameCount>=16&&columns===4&&rows===4){
+    const workingFrame=animationFrame%(columns*2);
+    return droneSpriteRow(drone,definition)*columns+(drone?.spriteState==='working'?workingFrame:animationFrame%columns);
+  }
+  // Keep older 6x6 sheets loadable for saved/custom sprite configurations.
+  if(!directionalSheet)return animationFrame;
+  return (droneSpriteRow(drone,definition)*columns+(animationFrame%columns))%frameCount;
+}
+function drawDroneSprite(drone){
+  const key={sow:'droneSow',water:'droneWater',harvest:'droneHarvest',excavation:'droneExcavation'}[drone?.type]||'drone';
+  const definition=cellSpriteDefinition(key);
+  const directionalSheet=Number(definition.frames||0)>=36&&Number(definition.columns||0)>=6&&Number(definition.rows||0)>=6;
+  const legacySheet=Number(definition.frames||0)>=16&&Number(definition.columns||0)>=4&&Number(definition.rows||0)>=4;
+  if(!directionalSheet&&!legacySheet)return false;
+  return drawCellSprite(key,drone.x,drone.y,{definition,frameIndex:droneSpriteFrameIndex(drone,definition)});
+}
+function updateDroneSpriteState(drone,dx,dy){
+  if(Math.abs(dx)>=.001||Math.abs(dy)>=.001){drone.facing=directionFromVector(dx,dy,drone.facing);drone.spriteState='moving';}
+  else if(drone.isWorking)drone.spriteState='working';
+  else drone.spriteState='idle';
+}
 function normalizeTrapDefinitions(definitions){const cloned=structuredClone(definitions);Object.values(cloned||{}).forEach(def=>{if(def.type==='freeze')def.type='stun';if(def.type==='single'){def.type='line';def.width??=1} (def.effects||[]).forEach(effect=>{if(effect.type==='freeze')effect.type='stun'})});return cloned}
 function applySavedConfig(){
  if(typeof savedConfig==='undefined'||!savedConfig||typeof savedConfig!=='object')return;
@@ -265,23 +365,69 @@ function validateRegulations(){
 }
 applySavedConfig();
 validateRegulations();
-trapEngine=new TrapEngine({getGrid:()=>grid,getEnemies:()=>enemies,getTile:()=>tile,getCanvasWidth:()=>canvas.width,getCanvasHeight:()=>canvas.height,damageEnemy:(enemy,damage,source)=>damageEnemy(enemy,damage,source),isWaveActive:()=>inWave,drawSprite:(key,x,y,options)=>drawSprite(key,x,y,options),spawnVisualEffect:(type,x,y)=>effects.push(new SpriteEffect(x,y,type)),spawnFct:(x,y,text,color,kind)=>effects.push(new TextEffect(x,y,text,color,kind))});
+trapEngine=new TrapEngine({getGrid:()=>grid,getEnemies:()=>enemies,getTile:()=>tile,getCanvasWidth:()=>canvas.width,getCanvasHeight:()=>canvas.height,getMapBounds:()=>getMapBounds(),getFrame:()=>Number(TEST_RUNTIME.frame)||0,damageEnemy:(enemy,damage,source)=>damageEnemy(enemy,damage,source),isWaveActive:()=>inWave,drawSprite:(key,x,y,options)=>drawSprite(key,x,y,options),spawnVisualEffect:(type,x,y)=>effects.push(new SpriteEffect(x,y,type)),spawnFct:(x,y,text,color,kind)=>effects.push(new TextEffect(x,y,text,color,kind))});
 function activeTree(){return TECH_TREES.find(t=>t.id===activeTreeId)||TECH_TREES[0]}function treeNodes(){return activeTree()?.nodes||[]}function node(id){return treeNodes().find(n=>n[0]===id)}function buff(type){return Object.values(buffs).reduce((s,id)=>{let b=buffDefinition(id);return s+(b&&b[2]===type?b[3]:0)},0)}function mult(type){return 1+buff(type)}
 window.getTrapBuffMultiplier=effectType=>['poison','burn'].includes(effectType)?mult('trap_damage'):1;
 window.getTrapBuffDurationMultiplier=effectType=>['poison','burn','slow'].includes(effectType)?mult('trap_duration'):1;
-class Farm{constructor(x,y){this.gx=x;this.gy=y;this.level=1;this.maxHp=100*mult('farm_hp');this.hp=this.maxHp;this.state=0;this.progress=0}update(){if(inWave&&this.state===1){this.progress+=.15*CONFIG.cropGrowSpeed*(1+(this.level-1)*.25)*mult('crop_speed');if(this.progress>=100){this.progress=100;this.state=2}}}upgrade(){let c=Math.floor(CONFIG.costFarm*1.5*this.level);if(money>=c){money-=c;this.level++;this.maxHp=Math.floor(100*(1+(this.level-1)*.5)*mult('farm_hp'));this.hp=this.maxHp;toast('畑をアップグレードしました')}}}
-class Building{constructor(type,x,y){this.type=type;this.gx=x;this.gy=y;this.hp=this.maxHp=type==='wall'?150:100;this.level=1;this.cool=0;this.timer=0}update(){if(this.type==='lab'&&inWave&&++this.timer>=120){this.timer=0;let g=Math.max(1,Math.round(mult('science_gen')));science+=g;effects.push(new TextEffect(this.gx*tile+4,this.gy*tile,`+${g} Sci`,'#5bd5e6'))}if(['mg','missile'].includes(this.type)){if(this.cool>0)this.cool--;let range=(this.type==='mg'?CONFIG.mgRange:CONFIG.missileRange)*tile*mult(this.type==='missile'?'missile_range':'none'),e=enemies.filter(a=>dist(a.x,a.y,this.gx*tile+12,this.gy*tile+12)<range).sort((a,b)=>dist(a.x,a.y,this.gx*tile+12,this.gy*tile+12)-dist(b.x,b.y,this.gx*tile+12,this.gy*tile+12))[0];if(e&&this.cool<=0){bullets.push(new Bullet(this,e));this.cool=Math.max(2,Math.floor((this.type==='mg'?CONFIG.mgCooldown:CONFIG.missileCooldown)*(1-(this.type==='mg'?buff('mg_cooldown'):0))))}}}upgrade(){let base=this.type==='mg'?CONFIG.costMG:this.type==='missile'?CONFIG.costMissile:this.type==='lab'?CONFIG.costLab:CONFIG.costWall,c=Math.floor(base*.8*this.level);if(money>=c){money-=c;this.level++;this.maxHp*=1.35;this.hp=this.maxHp;toast('建物を強化しました')}}}
-class Drone{constructor(type){this.type=type;this.color={sow:'#62d889',water:'#62c9ef',harvest:'#f3c95c',excavation:'#d596ff'}[type]||'#f8c85d';this.x=(Math.floor(CONFIG.gridCols/2)+.5)*tile;this.y=(CONFIG.gridRows-2)*tile;this.target=null;this.work=0;this.goal=null;this.nextDrop=EXCAVATION_DRONE_CONFIG.dropIntervalMin}update(){if(!inWave){if(this.target)this.target.targetedBy=null;this.target=null;return}if(this.type==='excavation'){this.updateExcavation();return}let candidates=farms.filter(f=>(this.type==='sow'?f.state===0:this.type==='water'?f.state===2:f.state===3)&&!f.targetedBy);if(!this.target)this.target=candidates[0]||null;let tx=this.target?.gx*tile+12??this.x,ty=this.target?.gy*tile+12??this.y;if(this.target)this.target.targetedBy=this;let d=dist(this.x,this.y,tx,ty),sp=CONFIG.droneBaseSpeed*mult('drone_speed');if(d>4){this.x+=(tx-this.x)/d*sp;this.y+=(ty-this.y)/d*sp}else if(this.target&&++this.work>=18){let f=this.target;f.targetedBy=null;if(this.type==='sow')f.state=1;if(this.type==='water')f.state=3;if(this.type==='harvest'){f.state=0;f.progress=0;let g=Math.floor(CONFIG.cropSellValue*mult('crop_sell'));money+=g;effects.push(new TextEffect(this.x,this.y,`+$${g}`,'#57d68d'))}effects.push(new SpriteEffect(this.x,this.y,`${this.type}-effect`));this.target=null;this.work=0}}updateExcavation(){let targets=[];for(let y=1;y<CONFIG.gridRows-1;y++)for(let x=0;x<CONFIG.gridCols;x++)if(grid[y][x]==='blocked')targets.push({x:x*tile+12,y:y*tile+12});if(!this.goal||dist(this.x,this.y,this.goal.x,this.goal.y)<5)this.goal=targets[Math.floor(gameRandom()*targets.length)]||{x:this.x,y:this.y};let d=dist(this.x,this.y,this.goal.x,this.goal.y),sp=EXCAVATION_DRONE_CONFIG.baseSpeed*mult('drone_speed');if(d>4){this.x+=(this.goal.x-this.x)/d*sp;this.y+=(this.goal.y-this.y)/d*sp}else {if((this.nextDrop%12)===0)effects.push(new SpriteEffect(this.x,this.y,'excavation-effect'));if(--this.nextDrop<=0){this.nextDrop=EXCAVATION_DRONE_CONFIG.dropIntervalMin+gameRandom()*(EXCAVATION_DRONE_CONFIG.dropIntervalMax-EXCAVATION_DRONE_CONFIG.dropIntervalMin);if(gameRandom()<=EXCAVATION_DRONE_CONFIG.excavateChance){let m=Math.round(EXCAVATION_DRONE_CONFIG.moneyMin+gameRandom()*(EXCAVATION_DRONE_CONFIG.moneyMax-EXCAVATION_DRONE_CONFIG.moneyMin)),s=Math.round(EXCAVATION_DRONE_CONFIG.scienceMin+gameRandom()*(EXCAVATION_DRONE_CONFIG.scienceMax-EXCAVATION_DRONE_CONFIG.scienceMin));money+=m;science+=s;effects.push(new TextEffect(this.x,this.y,`+$${m} / +${s}Sci`,'#f8c85d'));if(gameRandom()<=EXCAVATION_DRONE_CONFIG.buffDropChance){let pool=BUFF_DEFINITIONS.filter(b=>!buffs[b[0]]);for(let i=0;i<Math.min(EXCAVATION_DRONE_CONFIG.buffDropCount,pool.length);i++){let b=pool.splice(Math.floor(gameRandom()*pool.length),1)[0];if(b)buffs[b[0]]=b[0]}toast('発掘でバフを発見しました')}}}}}}
+class Farm{constructor(x,y){this.gx=x;this.gy=y;this.level=1;this.maxHp=100*mult('farm_hp');this.hp=this.maxHp;this.state=0;this.progress=0}update(){if(inWave&&this.state===2){this.progress+=.15*CONFIG.cropGrowSpeed*(1+(this.level-1)*.25)*mult('crop_speed');if(this.progress>=100){this.progress=100;this.state=3}}}upgrade(){let c=Math.floor(CONFIG.costFarm*1.5*this.level);if(money>=c){money-=c;this.level++;this.maxHp=Math.floor(100*(1+(this.level-1)*.5)*mult('farm_hp'));this.hp=this.maxHp;toast('畑をアップグレードしました')}}}
+class Building{
+  constructor(type,x,y){this.type=type;this.gx=x;this.gy=y;this.hp=this.maxHp=100;this.level=1;this.cool=0;this.timer=0;this.activeTimer=0;this.facing='right'}
+  update(){
+    if(this.activeTimer>0)this.activeTimer--;
+    if(this.type==='lab'&&inWave&&++this.timer>=120){this.timer=0;let g=Math.max(1,Math.round(mult('science_gen')));science+=g;effects.push(new TextEffect(this.gx*tile+4,this.gy*tile,`+${g} Sci`,'#5bd5e6'))}
+    if(['mg','missile'].includes(this.type)){
+      if(this.cool>0)this.cool--;
+      const cx=this.gx*tile+tile/2,cy=this.gy*tile+tile/2,range=(this.type==='mg'?CONFIG.mgRange:CONFIG.missileRange)*tile*mult(this.type==='missile'?'missile_range':'none');
+      const e=enemies.filter(a=>dist(a.x,a.y,cx,cy)<range).sort((a,b)=>dist(a.x,a.y,cx,cy)-dist(b.x,b.y,cx,cy))[0];
+      if(e){this.facing=turretDirectionFromVector(e.x-cx,this.facing);if(this.cool<=0){bullets.push(new Bullet(this,e));this.activeTimer=12;this.cool=Math.max(2,Math.floor((this.type==='mg'?CONFIG.mgCooldown:CONFIG.missileCooldown)*(1-(this.type==='mg'?buff('mg_cooldown'):0))))}}
+    }
+  }
+  upgrade(){let base=buildingUpgradeBaseCost(this.type),c=Math.floor(base*.8*this.level);if(money>=c){money-=c;this.level++;this.maxHp*=1.35;this.hp=this.maxHp;toast('建物を強化しました')}}
+}
+class Drone{
+  constructor(type){this.type=type;this.color={sow:'#62d889',water:'#62c9ef',harvest:'#f3c95c',excavation:'#d596ff'}[type]||'#f8c85d';this.x=(Math.floor(CONFIG.gridCols/2)+.5)*tile;this.y=(CONFIG.gridRows-2)*tile;this.target=null;this.work=0;this.goal=null;this.nextDrop=EXCAVATION_DRONE_CONFIG.dropIntervalMin;this.facing='down';this.spriteState='idle';this.isWorking=false}
+  update(){
+    const oldX=this.x,oldY=this.y;
+    this.isWorking=false;
+    if(!inWave){if(this.target)this.target.targetedBy=null;this.target=null;this.spriteState='idle';this.moveX=0;this.moveY=0;return}
+    if(this.type==='excavation'){this.updateExcavation();updateDroneSpriteState(this,this.x-oldX,this.y-oldY);return}
+    if(this.target&&(!farms.includes(this.target)||(this.type==='sow'?this.target.state!==0:this.type==='water'?this.target.state!==1:this.target.state!==3))){if(this.target.targetedBy===this)this.target.targetedBy=null;this.target=null;this.work=0}
+    const candidates=farms.filter(f=>(this.type==='sow'?f.state===0:this.type==='water'?f.state===1:f.state===3)&&!f.targetedBy);
+    if(!this.target&&candidates.length){
+      candidates.sort((a,b)=>dist(this.x,this.y,a.gx*tile+tile/2,a.gy*tile+tile/2)-dist(this.x,this.y,b.gx*tile+tile/2,b.gy*tile+tile/2));
+      this.target=candidates[0];
+    }
+    const tx=this.target?this.target.gx*tile+tile/2:this.x,ty=this.target?this.target.gy*tile+tile/2:this.y;
+    if(this.target)this.target.targetedBy=this;
+    const d=dist(this.x,this.y,tx,ty),sp=CONFIG.droneBaseSpeed*mult('drone_speed');
+    if(d>4){
+      if(d<=sp){this.x=tx;this.y=ty}
+      else{this.x+=(tx-this.x)/d*sp;this.y+=(ty-this.y)/d*sp}
+    }
+    else if(this.target){this.isWorking=true;if(++this.work>=18){let f=this.target;f.targetedBy=null;if(this.type==='sow'){f.state=1;f.progress=0}if(this.type==='water')f.state=2;if(this.type==='harvest'){f.state=0;f.progress=0;let g=Math.floor(CONFIG.cropSellValue*mult('crop_sell'));money+=g;effects.push(new TextEffect(this.x,this.y,`+$${g}`,'#57d68d'))}effects.push(new SpriteEffect(this.x,this.y,`${this.type}-effect`));this.target=null;this.work=0}}
+    this.moveX=this.x-oldX;this.moveY=this.y-oldY;updateDroneSpriteState(this,this.moveX,this.moveY);
+  }
+  updateExcavation(){
+    let targets=[];for(let y=1;y<CONFIG.gridRows-1;y++)for(let x=0;x<CONFIG.gridCols;x++)if(grid[y][x]==='blocked')targets.push({x:x*tile+tile/2,y:y*tile+tile/2});
+    if(!this.goal||dist(this.x,this.y,this.goal.x,this.goal.y)<5)this.goal=targets[Math.floor(gameRandom()*targets.length)]||{x:this.x,y:this.y};
+    const d=dist(this.x,this.y,this.goal.x,this.goal.y),sp=EXCAVATION_DRONE_CONFIG.baseSpeed*mult('drone_speed');
+    if(d>4){
+      if(d<=sp){this.x=this.goal.x;this.y=this.goal.y}
+      else{this.x+=(this.goal.x-this.x)/d*sp;this.y+=(this.goal.y-this.y)/d*sp}
+      this.isWorking=false;
+    }
+    else {this.isWorking=true;if((this.nextDrop%12)===0)effects.push(new SpriteEffect(this.x,this.y,'excavation-effect'));if(--this.nextDrop<=0){this.nextDrop=EXCAVATION_DRONE_CONFIG.dropIntervalMin+gameRandom()*(EXCAVATION_DRONE_CONFIG.dropIntervalMax-EXCAVATION_DRONE_CONFIG.dropIntervalMin);if(gameRandom()<=EXCAVATION_DRONE_CONFIG.excavateChance){let m=Math.round(EXCAVATION_DRONE_CONFIG.moneyMin+gameRandom()*(EXCAVATION_DRONE_CONFIG.moneyMax-EXCAVATION_DRONE_CONFIG.moneyMin)),s=Math.round(EXCAVATION_DRONE_CONFIG.scienceMin+gameRandom()*(EXCAVATION_DRONE_CONFIG.scienceMax-EXCAVATION_DRONE_CONFIG.scienceMin));money+=m;science+=s;effects.push(new TextEffect(this.x,this.y,`+$${m} / +${s}Sci`,'#f8c85d'));if(gameRandom()<=EXCAVATION_DRONE_CONFIG.buffDropChance){let pool=BUFF_DEFINITIONS.filter(b=>!buffs[b[0]]);for(let i=0;i<Math.min(EXCAVATION_DRONE_CONFIG.buffDropCount,pool.length);i++){let b=pool.splice(Math.floor(gameRandom()*pool.length),1)[0];if(b)buffs[b[0]]=b[0]}toast('発掘でバフを発見しました')}}}}}
+}
  class Enemy{constructor(type){this.type=type;this.hp=this.maxHp=0;this.speed=0;this.damage=0;this.x=(Math.floor(CONFIG.gridCols/2)+.5)*tile;this.y=tile/2;this.path=[];this.waypoint=1;this.pathTick=0;this.target=null;this.lastX=this.x;this.lastY=this.y;this.stuckFrames=0;this.attackFctTimer=0;this.attackFctDamage=0;this.facing='down';this.spriteState='idle';this.spriteStateStartFrame=Number(TEST_RUNTIME.frame)||0;this.hitTimer=0;this.deathTimer=0;this.dead=false}repath(){let sx=Math.max(0,Math.min(CONFIG.gridCols-1,Math.floor(this.x/tile))),sy=Math.max(0,Math.min(CONFIG.gridRows-1,Math.floor(this.y/tile)));this.path=findPath(sx,sy,this.target.gx,this.target.gy);this.waypoint=1;this.pathTick=0}update(){if(!farms.length)return;let nt=farms.slice().sort((a,b)=>dist(this.x,this.y,a.gx*tile+12,a.gy*tile+12)-dist(this.x,this.y,b.gx*tile+12,b.gy*tile+12))[0];if(this.target!==nt){this.target=nt;this.attackFctTimer=0;this.attackFctDamage=0;this.path=[];this.repath()}let tx=this.target.gx*tile+12,ty=this.target.gy*tile+12;if(dist(this.x,this.y,tx,ty)<tile*.8){let dealt=this.damage/60;this.target.hp-=dealt;this.attackFctTimer++;this.attackFctDamage+=dealt;if(this.attackFctTimer>=15){spawnFct(tx,ty,`-${formatFctNumber(this.attackFctDamage)}`,'#ff6b6b','enemy-damage');this.attackFctTimer=0;this.attackFctDamage=0}if(this.target.hp<=0){grid[this.target.gy][this.target.gx]=null;farms=farms.filter(f=>f!==this.target);this.target=null;if(!farms.length)endGame(false)}return}let next=this.path[this.waypoint],nextBlocked=next&&solid(next[0],next[1],this.target.gx,this.target.gy);if(++this.pathTick>=20||!this.path.length||this.stuckFrames>=30||nextBlocked)this.repath();let n=this.path[this.waypoint];if(n){let nx=n[0]*tile+12,ny=n[1]*tile+12,d=dist(this.x,this.y,nx,ny),slow=grid[Math.floor(this.y/tile)]?.[Math.floor(this.x/tile)]==='slow'?Math.max(.1,CONFIG.slowTileEffect/mult('slow_tile')):1,step=this.speed*slow;if(d<=step+.5){this.x=nx;this.y=ny;this.waypoint++;this.stuckFrames=0}else{this.x+=(nx-this.x)/d*step;this.y+=(ny-this.y)/d*step;this.stuckFrames=dist(this.x,this.y,this.lastX,this.lastY)<.05?this.stuckFrames+1:0}this.lastX=this.x;this.lastY=this.y}}}
 class Bullet{constructor(t,e){this.t=t;this.e=e;this.x=t.gx*tile+12;this.y=t.gy*tile+12;this.angle=0;this.dead=false}update(){if(!this.e||this.e.hp<=0){this.dead=true;return}let d=dist(this.x,this.y,this.e.x,this.e.y),sp=5;this.angle=Math.atan2(this.e.y-this.y,this.e.x-this.x);if(d<sp){let dmg=(this.t.type==='mg'?CONFIG.mgDamage*mult('mg_damage'):CONFIG.missileDamage*mult('missile_damage'));if(this.t.type==='missile'){enemies.forEach(e=>{if(dist(e.x,e.y,this.e.x,this.e.y)<CONFIG.missileSplashRadius*tile)damageEnemy(e,dmg,{type:this.t.type})});effects.push(new Explosion(this.e.x,this.e.y))}else damageEnemy(this.e,dmg,{type:this.t.type});this.dead=true}else{this.x+=(this.e.x-this.x)/d*sp;this.y+=(this.e.y-this.y)/d*sp}}}class TextEffect{constructor(x,y,t,c,kind='gain'){this.x=x;this.y=y;this.t=t;this.c=c;this.kind=kind;this.life=50}update(){this.y-=this.kind==='enemy-damage'?0.7:1;this.life--}}class SpriteEffect{constructor(x,y,type){this.x=x;this.y=y;this.type=type;this.life=24}update(){this.life--}}class Explosion{constructor(x,y){this.x=x;this.y=y;this.life=20}update(){this.life--}}
 function formatFctNumber(value){const n=Number(value)||0;return Number.isInteger(n)?String(n):n.toFixed(1).replace(/\.0$/,'')}
 function spawnFct(x,y,text,color,kind='gain'){effects.push(new TextEffect(x,y,text,color,kind))}
  function damageEnemy(enemy,damage,source={}){if(!enemy||enemy.hp<=0||enemy.dead)return;const amount=Math.max(0,Number(damage)||0);enemy.hp-=amount;if(amount>0){if(enemy.hp<=0){enemy.dead=true;enemy.hitTimer=0;enemy.deathTimer=ENEMY_SPRITE_LAYOUT.deathDuration;setEnemySpriteState(enemy,'death',true)}else{enemy.hitTimer=ENEMY_SPRITE_LAYOUT.hitDuration;setEnemySpriteState(enemy,'hit',true)}}const color=source.type==='poison'?'#b78cff':source.type==='burn'?'#ff9b54':'#fff';spawnFct(enemy.x,enemy.y,`-${formatFctNumber(amount)}`,color,source.type==='poison'||source.type==='burn'?'trap-damage':'enemy-hit');}
-function dist(x,y,a,b){return Math.hypot(x-a,y-b)}function solid(x,y,tx,ty){if(x<0||y<0||x>=CONFIG.gridCols||y>=CONFIG.gridRows||!isMapCell(x,y))return true;return grid[y][x]&&!(x===tx&&y===ty)}function findPath(sx,sy,tx,ty){let q=[[sx,sy]],prev=new Map([[`${sx},${sy}`,null]]);for(let i=0;i<q.length;i++){let [x,y]=q[i];if(x===tx&&y===ty){let p=[];for(let k=`${x},${y}`;k;k=prev.get(k))p.unshift(k.split(',').map(Number));return p}for(let [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){let nx=x+dx,ny=y+dy,k=`${nx},${ny}`;if(!prev.has(k)&&!solid(nx,ny,tx,ty)){prev.set(k,`${x},${y}`);q.push([nx,ny])}}}return []}function addFarm(x,y){let f=new Farm(x,y);farms.push(f);grid[y][x]='farm'}function validPlace(x,y){if(x<0||y<1||x>=CONFIG.gridCols||y>=CONFIG.gridRows-1||grid[y][x])return false;grid[y][x]='wall';let ok=farms.every(f=>findPath(Math.floor(CONFIG.gridCols/2),0,f.gx,f.gy).length);grid[y][x]=null;return ok}function place(x,y,type){let cost=getBuildingCost(type);if(!validPlace(x,y)||money<cost)return false;money-=cost;if(TRAP_DEFINITIONS[type]){const result=trapEngine.place(x,y,TRAP_DEFINITIONS[type],lineDirection);if(!result.ok){money+=cost;toast(result.error);return false}renderAll();return true}if(type==='farm')addFarm(x,y);else{grid[y][x]=type;buildings.push(new Building(type,x,y))}renderAll();return true}
+function dist(x,y,a,b){return Math.hypot(x-a,y-b)}function solid(x,y,tx,ty){if(x<0||y<0||x>=CONFIG.gridCols||y>=CONFIG.gridRows||!isMapCell(x,y))return true;return grid[y][x]&&!(x===tx&&y===ty)}function findPath(sx,sy,tx,ty){let q=[[sx,sy]],prev=new Map([[`${sx},${sy}`,null]]);for(let i=0;i<q.length;i++){let [x,y]=q[i];if(x===tx&&y===ty){let p=[];for(let k=`${x},${y}`;k;k=prev.get(k))p.unshift(k.split(',').map(Number));return p}for(let [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){let nx=x+dx,ny=y+dy,k=`${nx},${ny}`;if(!prev.has(k)&&!solid(nx,ny,tx,ty)){prev.set(k,`${x},${y}`);q.push([nx,ny])}}}return []}function addFarm(x,y){let f=new Farm(x,y);farms.push(f);grid[y][x]='farm'}function validPlace(x,y){if(x<0||y<1||x>=CONFIG.gridCols||y>=CONFIG.gridRows-1||grid[y][x])return false;grid[y][x]='blocked';let ok=farms.every(f=>findPath(Math.floor(CONFIG.gridCols/2),0,f.gx,f.gy).length);grid[y][x]=null;return ok}function place(x,y,type){let cost=getBuildingCost(type);if(!validPlace(x,y)||money<cost)return false;money-=cost;if(TRAP_DEFINITIONS[type]){const result=trapEngine.place(x,y,TRAP_DEFINITIONS[type],lineDirection);if(!result.ok){money+=cost;toast(result.error);return false}renderAll();return true}if(type==='farm')addFarm(x,y);else{grid[y][x]=type;buildings.push(new Building(type,x,y))}renderAll();return true}
 function removeBuilding(building){
-  if(!(building instanceof Building))return false;
   const index=buildings.indexOf(building);
   if(index<0)return false;
+  if(!building||building.gx===undefined||building.gy===undefined)return false;
   if(grid[building.gy])grid[building.gy][building.gx]=null;
   buildings.splice(index,1);
   if(selected===building)selected=null;
@@ -289,6 +435,53 @@ function removeBuilding(building){
   renderSelection();
   toast('建築を撤去しました（コストは返還されません）');
   return true;
+}
+function removeTrap(trap){
+  if(!trapEngine||!trap||trap.gx===undefined||trap.gy===undefined)return false;
+  const removed=trapEngine.remove(trap.gx,trap.gy);
+  if(!removed){
+    const index=trapEngine.traps.indexOf(trap);
+    if(index<0)return false;
+    trapEngine.traps.splice(index,1);
+  }
+  if(grid[trap.gy]?.[trap.gx]===trap.definition?.id)grid[trap.gy][trap.gx]=null;
+  if(selected===trap)selected=null;
+  renderAll();
+  renderSelection();
+  toast('罠を撤去しました（コストは返還されません）');
+  return true;
+}
+function removeFarm(farm){
+  const index=farms.indexOf(farm);
+  if(index<0)return false;
+  if(farms.length<=1){
+    toast('最後の畑は撤去できません');
+    return false;
+  }
+  if(grid[farm.gy])grid[farm.gy][farm.gx]=null;
+  farms.splice(index,1);
+  drones.forEach(d=>{if(d.target===farm){d.target=null;d.work=0}});
+  if(selected===farm)selected=null;
+  renderAll();
+  renderSelection();
+  toast('畑を撤去しました（コストは返還されません）');
+  return true;
+}
+function removeAt(x,y){
+  const building=buildings.find(b=>b.gx===x&&b.gy===y);
+  if(building)return removeBuilding(building);
+  const trap=trapEngine?.traps.find(t=>t.gx===x&&t.gy===y);
+  if(trap)return removeTrap(trap);
+  const farm=farms.find(f=>f.gx===x&&f.gy===y);
+  if(farm)return removeFarm(farm);
+  return false;
+}
+function removeTarget(target){
+  if(!target)return false;
+  if(buildings.includes(target))return removeBuilding(target);
+  if(trapEngine?.traps.includes(target))return removeTrap(target);
+  if(farms.includes(target))return removeFarm(target);
+  return false;
 }
 function waveBuffConfig(n){return WAVE_BUFF_CONFIG.waves[n]||WAVE_BUFF_CONFIG.default}
 function weightedRarity(weights){let entries=Object.entries(weights||{}).map(([rarity,weight])=>[Number(rarity),Math.max(0,Number(weight)||0)]).filter(x=>x[1]>0);let total=entries.reduce((s,x)=>s+x[1],0);if(!total)return 1;let r=gameRandom()*total;for(let [rarity,weight] of entries){r-=weight;if(r<0)return rarity}return entries[entries.length-1][0]}
@@ -304,7 +497,7 @@ function renderTech(){let ns=treeNodes();$('techtree').innerHTML=[1,2,3,4].map(t
 function renderTreeEditor(){let html=`<div class="tree-toolbar"><button id="add-tree">＋テックツリー追加</button><select id="tree-select">${TECH_TREES.map(t=>`<option value="${t.id}" ${t.id===activeTreeId?'selected':''}>${t.name}</option>`).join('')}</select></div>`;for(let t of TECH_TREES){html+=`<div class="tree-editor"><input data-tree-name="${t.id}" value="${t.name}"><input data-tree-desc="${t.id}" value="${t.description||''}"><button data-delete-tree="${t.id}" ${TECH_TREES.length<2?'disabled':''}>削除</button><div class="research-list">${t.nodes.map(n=>`<div class="research-row"><input data-node-field="name" data-tree="${t.id}" data-node="${n[0]}" value="${n[1]}"><input type="number" data-node-field="tier" data-tree="${t.id}" data-node="${n[0]}" value="${n[2]}" min="1" max="10"><input type="number" data-node-field="cost" data-tree="${t.id}" data-node="${n[0]}" value="${n[3]}" min="0"><select data-node-field="buffs" data-tree="${t.id}" data-node="${n[0]}" multiple>${BUFF_DEFINITIONS.map(b=>`<option value="${b[0]}" ${n[5].split(',').includes(b[0])?'selected':''}>${b[1]}</option>`).join('')}</select><small>依存: ${n[4].join(', ')||'なし'}</small><button data-delete-node="${t.id}|${n[0]}">削除</button></div>`).join('')}</div><button data-add-node="${t.id}">＋研究を追加</button></div>`}$('tech-editor').innerHTML=html;$('tree-select').onchange=e=>{activeTreeId=e.target.value;renderAll()};$('add-tree').onclick=()=>{let id='tree_'+Date.now();TECH_TREES.push({id,name:'新しいテックツリー',description:'説明を入力',nodes:[]});activeTreeId=id;renderAll()};document.querySelectorAll('[data-tree-name]').forEach(e=>e.onchange=()=>{TECH_TREES.find(t=>t.id===e.dataset.treeName).name=e.value;renderTreeChoices();renderTech()});document.querySelectorAll('[data-tree-desc]').forEach(e=>e.onchange=()=>TECH_TREES.find(t=>t.id===e.dataset.treeDesc).description=e.value);document.querySelectorAll('[data-delete-tree]').forEach(e=>e.onclick=()=>{TECH_TREES=TECH_TREES.filter(t=>t.id!==e.dataset.deleteTree);if(activeTreeId===e.dataset.deleteTree)activeTreeId=TECH_TREES[0].id;renderAll()});document.querySelectorAll('[data-delete-node]').forEach(e=>e.onclick=()=>{let [tid,nid]=e.dataset.deleteNode.split('|'),t=TECH_TREES.find(x=>x.id===tid);t.nodes=t.nodes.filter(n=>n[0]!==nid).map(n=>[n[0],n[1],n[2],n[3],n[4].filter(x=>x!==nid),n[5]]);renderAll()});document.querySelectorAll('[data-add-node]').forEach(e=>e.onclick=()=>{let t=TECH_TREES.find(x=>x.id===e.dataset.addNode),id=`research_${Date.now()}`;t.nodes.push([id,'新しい研究',1,100,[],BUFF_DEFINITIONS[0][0]]);renderAll()});document.querySelectorAll('[data-node-field]').forEach(e=>e.onchange=()=>{let n=TECH_TREES.find(t=>t.id===e.dataset.tree).nodes.find(n=>n[0]===e.dataset.node),v=e.dataset.nodeField==='buffs'?[...e.selectedOptions].map(o=>o.value).join(','):e.dataset.nodeField==='name'?e.value:Number(e.value);n[{name:1,tier:2,cost:3,buffs:5}[e.dataset.nodeField]]=v;renderTech()})}
 function renderParams(){ $('param-editor').innerHTML=Object.entries(CONFIG).map(([k,v])=>`<div class="param"><label>${k}<output>${v}</output></label><input data-param="${k}" type="range" min="0" max="${Math.max(v*3,1)}" step="${v%1?'.01':'1'}" value="${v}"></div>`).join('');document.querySelectorAll('[data-param]').forEach(i=>i.oninput=()=>{CONFIG[i.dataset.param]=Number(i.value);i.previousElementSibling.querySelector('output').value=i.value;tile=canvas.width/CONFIG.gridCols;renderStats()});$('buff-editor').innerHTML=BUFF_DEFINITIONS.map(b=>`<div class="param"><label>${b[1]} <input type="checkbox" data-buff-toggle="${b[0]}" ${buffs[b[0]]?'checked':''}></label><small>${b[4]}</small></div>`).join('');document.querySelectorAll('[data-buff-toggle]').forEach(i=>i.onchange=()=>{if(i.checked)buffs[i.dataset.buff]=i.dataset.buff;else delete buffs[i.dataset.buff];renderAll()});$('excavation-editor').innerHTML=Object.entries(EXCAVATION_DRONE_CONFIG).map(([k,v])=>`<div class="param"><label>${k}<output>${v}</output></label><input data-exc-param="${k}" type="range" min="0" max="${Math.max(v*3,1)}" step="${v%1?'.01':'1'}" value="${v}"></div>`).join('');document.querySelectorAll('[data-exc-param]').forEach(i=>i.oninput=()=>{EXCAVATION_DRONE_CONFIG[i.dataset.excParam]=Number(i.value);i.previousElementSibling.querySelector('output').value=i.value})}
 function renderStats(){$('money').textContent=Math.floor(money);$('science').textContent=science;$('science-tech').textContent=science;$('farms').textContent=farms.length;$('wave').textContent=`${wave} / ${CONFIG.maxWave}`;$('drones').textContent=`🌱${droneCount('sow')} 💧${droneCount('water')} 🌾${droneCount('harvest')} ⛏${droneCount('excavation')}`}
-function renderAll(){renderStats();$('build-grid').innerHTML=[['farm','🌱 畑'],['wall','🧱 壁'],['lab','🔬 研究所'],['slow','🟣 スロータイル'],['mg','🔫 マシンガン'],['missile','🚀 ミサイル'],['select','🖱 選択'],['remove','🗑 撤去']].map(a=>`<button data-build="${a[0]}" class="${a[0]==='remove'?'danger':''}">${a[1]}<span class="cost">${['select','remove'].includes(a[0])?'':'$'+getBuildingCost(a[0])}</span></button>`).join('');$('drone-shop').innerHTML=[['sow','🌱 種まき'],['water','💧 水撒き'],['harvest','🌾 刈取り'],['excavation','⛏ 発掘']].map(([t,n])=>`<button class="drone-btn" data-drone="${t}">${n}<span class="cost">$${getDroneCost(t)}</span></button>`).join('');document.querySelectorAll('[data-build]').forEach(b=>b.onclick=()=>buildMode=b.dataset.build);document.querySelectorAll('[data-drone]').forEach(b=>b.onclick=()=>buyDrone(b.dataset.drone));$('buff-list').innerHTML=Object.values(buffs).length?Object.values(buffs).map(id=>`<span class="badge">${buffDefinition(id)?.[1]||id}</span>`).join(''):'まだバフはありません';renderTech();renderTreeEditor();renderParams();renderTreeChoices()}
+function renderAll(){renderStats();$('build-grid').innerHTML=[['farm','🌱 畑'],['lab','🔬 研究所'],['slow','🟣 スロータイル'],['mg','🔫 マシンガン'],['missile','🚀 ミサイル'],['select','🖱 選択'],['remove','🗑 撤去']].map(a=>`<button type="button" data-build="${a[0]}" class="${a[0]==='remove'?'danger':''}">${a[1]}<span class="cost">${['select','remove'].includes(a[0])?'':'$'+getBuildingCost(a[0])}</span></button>`).join('');$('drone-shop').innerHTML=[['sow','🌱 種まき'],['water','💧 水撒き'],['harvest','🌾 刈取り'],['excavation','⛏ 発掘']].map(([t,n])=>`<button type="button" class="drone-btn" data-drone="${t}">${n}<span class="cost">$${getDroneCost(t)}</span></button>`).join('');document.querySelectorAll('#build-grid [data-build]').forEach(b=>b.onclick=()=>setBuildMode(b.dataset.build));document.querySelectorAll('[data-drone]').forEach(b=>b.onclick=()=>buyDrone(b.dataset.drone));$('buff-list').innerHTML=Object.values(buffs).length?Object.values(buffs).map(id=>`<span class="badge">${buffDefinition(id)?.[1]||id}</span>`).join(''):'まだバフはありません';renderTech();renderTreeEditor();renderParams();renderTreeChoices();setBuildMode(buildMode)}
 function buyDrone(t){let c=Math.floor(CONFIG.costDrone*Math.pow(1.5,droneCount(t)));if(money<c){toast('資金が足りません');return}money-=c;drones.push(new Drone(t));renderAll()}
  function update(){farms.forEach(f=>f.update());buildings.forEach(b=>b.update());drones.forEach(d=>d.update());enemies.forEach(e=>e.update());bullets.forEach(b=>b.update());effects.forEach(e=>e.update());enemies=enemies.filter(e=>e.dead?e.deathTimer>0:e.hp>0);bullets=bullets.filter(b=>!b.dead);effects=effects.filter(e=>e.life>0);if(inWave&&!spawning&&!enemies.length)waveClear();renderStats()}
 function drawMapBackdrop(){
@@ -319,8 +512,8 @@ function drawMapBackdrop(){
 function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);drawMapBackdrop();for(let y=0;y<CONFIG.gridRows;y++)for(let x=0;x<CONFIG.gridCols;x++){let v=grid[y]?.[x];if(v){ctx.fillStyle=colors[v]||'#596b72';ctx.fillRect(x*tile+1,y*tile+1,tile-2,tile-2)}}farms.forEach(f=>{ctx.fillStyle='#64c987';ctx.fillRect(f.gx*tile+2,f.gy*tile+2,tile-4,tile-4);ctx.fillStyle='#19352a';ctx.fillRect(f.gx*tile+3,f.gy*tile+tile-5,(tile-6)*Math.max(0,f.hp/f.maxHp),2)});buildings.forEach(b=>{ctx.fillStyle=colors[b.type]||'#798c96';ctx.fillRect(b.gx*tile+3,b.gy*tile+3,tile-6,tile-6)});enemies.forEach(e=>{ctx.fillStyle=e.definition?.color||'#e85d5d';ctx.beginPath();ctx.arc(e.x,e.y,8,0,Math.PI*2);ctx.fill()});drones.forEach(d=>{ctx.fillStyle='#f8c85d';ctx.beginPath();ctx.arc(d.x,d.y,4,0,Math.PI*2);ctx.fill()});bullets.forEach(b=>{ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(b.x,b.y,2,0,Math.PI*2);ctx.fill()});effects.forEach(e=>{if(e.t){ctx.fillStyle=e.c;ctx.fillText(e.t,e.x,e.y)}})}
 const originalDrawForTraps=draw;draw=function(){originalDrawForTraps();trapEngine.draw(ctx)};
  const originalUpdateForTraps=update;update=function(){trapEngine.update();originalUpdateForTraps()};function loop(t){if(t-last>15){for(let i=0;i<gameSpeed;i++)update();TEST_RUNTIME.frame++;last=t}draw();if(!GAME_TEST_MODE)requestAnimationFrame(loop)}function toast(t){let e=$('toast');e.textContent=t;e.style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>e.style.display='none',1800)}
-function renderSelection(){const host=$('selection');if(!host)return;host.innerHTML=selected?`<b>${selected instanceof Farm?'🌱 畑':'🏗 '+selected.type}</b><p>Lv.${selected.level}　HP ${Math.ceil(selected.hp)} / ${Math.ceil(selected.maxHp)}</p><button id="btn-upgrade-target">⬆ アップグレード</button>${selected instanceof Building?'<button id="btn-remove-target" class="danger">🗑 撤去（返金なし）</button>':''}`:'<b>選択オブジェクト</b><p>キャンバス上の建物を選択してください</p>';if(selected){$('btn-upgrade-target').onclick=()=>{selected.upgrade();renderAll()};$('btn-remove-target')?.addEventListener('click',()=>removeBuilding(selected))}}
-function showSelectionAt(x,y){selected=farms.find(f=>f.gx===x&&f.gy===y)||buildings.find(b=>b.gx===x&&b.gy===y)||null;renderSelection()}function paintAt(e){let r=canvas.getBoundingClientRect(),x=Math.floor((e.clientX-r.left)*canvas.width/r.width/tile),y=Math.floor((e.clientY-r.top)*canvas.height/r.height/tile),key=`${x},${y}`;if(key===lastPaintTile)return;lastPaintTile=key;if(buildMode==='remove'){const building=buildings.find(b=>b.gx===x&&b.gy===y);if(building)removeBuilding(building)}else if(buildMode!=='select')place(x,y,buildMode);else showSelectionAt(x,y)}canvas.onpointerdown=e=>{pointerDown=true;lastPaintTile='';canvas.setPointerCapture?.(e.pointerId);paintAt(e);e.preventDefault()};canvas.onpointermove=e=>{if(pointerDown){paintAt(e);e.preventDefault()}};canvas.onpointerup=()=>{pointerDown=false;lastPaintTile=''};window.addEventListener('pointerup',()=>{pointerDown=false;lastPaintTile=''});document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab,.tab-panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$(b.dataset.tab).classList.add('active')});$('btn-start-wave').onclick=startWave;$('restart').onclick=()=>{$('game-overlay').classList.add('hidden');resetGame()};$('resume').onclick=()=>document.querySelector('[data-tab="game-tab"]').click();$('reset').onclick=resetGame;
+function renderSelection(){const host=$('selection');if(!host)return;const target=selected;const isTrap=!!(target&&trapEngine?.traps.includes(target));const isFarm=!!(target&&(target instanceof Farm||farms.includes(target)));const canRemove=!!(target&&(buildings.includes(target)||isTrap||(isFarm&&farms.length>1)));const title=isFarm?'🌱 畑':isTrap?`${target.definition?.icon||'🪤'} ${target.definition?.name||'罠'}`:(`🏗 ${target?.type||''}`);const details=isTrap?`<p>コスト $${target.definition?.cost??0}　CD ${target.definition?.cooldown??0}s</p>`:`<p>Lv.${target?.level??1}　HP ${Math.ceil(target?.hp??0)} / ${Math.ceil(target?.maxHp??0)}</p>`;host.innerHTML=target?`<b>${title}</b>${details}${!isTrap?'<button type="button" id="btn-upgrade-target">⬆ アップグレード</button>':''}${canRemove?'<button type="button" id="btn-remove-target" class="danger">🗑 撤去（返金なし）</button>':''}`:'<b>選択オブジェクト</b><p>キャンバス上の建物を選択してください</p>';if(target){if(!isTrap){$('btn-upgrade-target').onclick=()=>{if(selected===target)target.upgrade();renderAll()};}$('btn-remove-target')?.addEventListener('click',()=>removeTarget(target))}}
+function showSelectionAt(x,y){selected=farms.find(f=>f.gx===x&&f.gy===y)||buildings.find(b=>b.gx===x&&b.gy===y)||trapEngine?.traps.find(t=>t.gx===x&&t.gy===y)||null;renderSelection()}function paintAt(e){let r=canvas.getBoundingClientRect(),x=Math.floor((e.clientX-r.left)*canvas.width/r.width/tile),y=Math.floor((e.clientY-r.top)*canvas.height/r.height/tile),key=`${x},${y}`;if(key===lastPaintTile)return;lastPaintTile=key;if(buildMode==='remove'){removeAt(x,y)}else if(buildMode!=='select')place(x,y,buildMode);else showSelectionAt(x,y)}canvas.onpointerdown=e=>{pointerDown=true;lastPaintTile='';canvas.setPointerCapture?.(e.pointerId);paintAt(e);e.preventDefault()};canvas.onpointermove=e=>{if(pointerDown){paintAt(e);e.preventDefault()}};canvas.onpointerup=()=>{pointerDown=false;lastPaintTile=''};window.addEventListener('pointerup',()=>{pointerDown=false;lastPaintTile=''});document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab,.tab-panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$(b.dataset.tab).classList.add('active')});$('btn-start-wave').onclick=startWave;$('restart').onclick=()=>{$('game-overlay').classList.add('hidden');resetGame()};$('resume').onclick=()=>document.querySelector('[data-tab="game-tab"]').click();$('reset').onclick=resetGame;
 // Initialization is performed after the map and editor extensions are installed.
 // dependency editing is represented by each research prerequisite array and included in export
 setTimeout(()=>{const host=document.getElementById('tech-editor');if(!host)return;const renderDeps=()=>{let old=document.getElementById('dependency-editor');if(old)old.remove();let wrap=document.createElement('div');wrap.id='dependency-editor';wrap.className='tree-editor';wrap.innerHTML='<h3>研究の依存関係</h3><p>各研究を解除するために必要な研究を複数選択できます。</p>';for(const t of TECH_TREES){let section=document.createElement('div');section.innerHTML=`<h4>${t.name}</h4>`;for(const n of t.nodes){let row=document.createElement('div');row.className='research-row';let label=document.createElement('label');label.textContent=n[1];let select=document.createElement('select');select.multiple=true;select.dataset.depTree=t.id;select.dataset.depNode=n[0];for(const candidate of t.nodes){if(candidate[0]===n[0])continue;let option=document.createElement('option');option.value=candidate[0];option.textContent=`${candidate[1]} (${candidate[0]})`;option.selected=n[4].includes(candidate[0]);select.appendChild(option)}select.onchange=()=>{let tree=TECH_TREES.find(x=>x.id===select.dataset.depTree),research=tree?.nodes.find(x=>x[0]===select.dataset.depNode);if(!research)return;research[4]=[...select.selectedOptions].map(o=>o.value);renderTech()};row.append(label,select);section.appendChild(row)}wrap.appendChild(section)}host.parentNode.appendChild(wrap)};const observer=new MutationObserver(renderDeps);observer.observe(host,{childList:true});renderDeps()},0);
@@ -350,9 +543,9 @@ renderTrapEditor=function(){
   });
 };
 
-// Drones launch from the left-side service lane in the landscape layout.
+// Drones launch from the active map's base position.
 const BaseDrone=Drone;
-Drone=class extends BaseDrone{constructor(type){super(type);this.x=tile;this.y=(Math.floor(CONFIG.gridRows/2)+.5)*tile;}};
+Drone=class extends BaseDrone{constructor(type){super(type);this.x=activeMap.base.x*tile+tile/2;this.y=activeMap.base.y*tile+tile/2;}};
 
 // Multi-spawn / single-base map system.
 // Routes are intentionally axis-aligned because the game uses a 4-direction grid.
@@ -375,23 +568,22 @@ const MAP_DEFINITIONS={
       // These are runtime landscape coordinates. They are intentionally kept
       // on the route's five-cell-wide display area so every object is visible.
       buildings:[
-        {type:'farm',gx:4,gy:5},{type:'farm',gx:10,gy:5},{type:'farm',gx:16,gy:5},{type:'farm',gx:22,gy:5},
-        {type:'wall',gx:4,gy:9},{type:'wall',gx:10,gy:9},{type:'wall',gx:16,gy:9},{type:'wall',gx:22,gy:9},
-        {type:'lab',gx:6,gy:6},{type:'lab',gx:12,gy:6},{type:'lab',gx:18,gy:6},{type:'lab',gx:24,gy:6},
-        {type:'mg',gx:6,gy:8},{type:'mg',gx:12,gy:8},{type:'mg',gx:18,gy:8},{type:'mg',gx:24,gy:8},
-        {type:'missile',gx:8,gy:5},{type:'missile',gx:14,gy:5},{type:'missile',gx:20,gy:5},{type:'missile',gx:26,gy:5},
-        // Forced detours: each wall column leaves exactly one gap in the
-        // five-cell-wide lane, so pathfinding must move around the barrier.
-        {type:'wall',gx:2,gy:6},{type:'wall',gx:2,gy:7},{type:'wall',gx:2,gy:8},{type:'wall',gx:2,gy:9},
-        {type:'wall',gx:27,gy:5},{type:'wall',gx:27,gy:6},{type:'wall',gx:27,gy:7},{type:'wall',gx:27,gy:8}
+        // One instance of every level (1-6) for each building type.
+        {type:'farm',gx:4,gy:5,level:1},{type:'farm',gx:10,gy:5,level:2},{type:'farm',gx:16,gy:5,level:3},{type:'farm',gx:22,gy:5,level:4},{type:'farm',gx:24,gy:5,level:5},{type:'farm',gx:28,gy:5,level:6},
+        {type:'lab',gx:1,gy:5,level:1},{type:'lab',gx:3,gy:5,level:2},{type:'lab',gx:6,gy:5,level:3},{type:'lab',gx:9,gy:5,level:4},{type:'lab',gx:15,gy:5,level:5},{type:'lab',gx:20,gy:5,level:6},
+        {type:'mg',gx:1,gy:8,level:1},{type:'mg',gx:4,gy:8,level:2},{type:'mg',gx:10,gy:8,level:3},{type:'mg',gx:16,gy:8,level:4},{type:'mg',gx:22,gy:8,level:5},{type:'mg',gx:28,gy:8,level:6},
+        {type:'missile',gx:5,gy:5,level:1},{type:'missile',gx:8,gy:5,level:2},{type:'missile',gx:12,gy:5,level:3},{type:'missile',gx:14,gy:5,level:4},{type:'missile',gx:18,gy:5,level:5},{type:'missile',gx:26,gy:5,level:6},
+        // BASE周辺のマップ4列（x=26..29）の空きマスにレベル1-6を分散させた畑を追加
+        {type:'farm',gx:26,gy:6,level:1},{type:'farm',gx:26,gy:7,level:4},{type:'farm',gx:26,gy:8,level:2},{type:'farm',gx:26,gy:9,level:5},
+        {type:'farm',gx:27,gy:5,level:3},{type:'farm',gx:27,gy:6,level:6},{type:'farm',gx:27,gy:7,level:1},{type:'farm',gx:27,gy:8,level:4},{type:'farm',gx:27,gy:9,level:2},
+        {type:'farm',gx:28,gy:6,level:3},{type:'farm',gx:28,gy:7,level:5},{type:'farm',gx:28,gy:9,level:1},
+        {type:'farm',gx:29,gy:5,level:2},{type:'farm',gx:29,gy:6,level:4},{type:'farm',gx:29,gy:8,level:3},{type:'farm',gx:29,gy:9,level:6},
       ],
       traps:[
         {id:'trap_tile_slow',gx:3,gy:7},{id:'trap_tile_slow',gx:9,gy:7},{id:'trap_tile_slow',gx:15,gy:7},{id:'trap_tile_slow',gx:21,gy:7},
         {id:'trap_tile_poison',gx:4,gy:7},{id:'trap_tile_poison',gx:10,gy:7},{id:'trap_tile_poison',gx:16,gy:7},{id:'trap_tile_poison',gx:22,gy:7},
         {id:'trap_tile_burn',gx:5,gy:7},{id:'trap_tile_burn',gx:11,gy:7},{id:'trap_tile_burn',gx:17,gy:7},{id:'trap_tile_burn',gx:23,gy:7},
-        {id:'trap_tile_armor_down',gx:6,gy:7},{id:'trap_tile_armor_down',gx:12,gy:7},{id:'trap_tile_armor_down',gx:18,gy:7},{id:'trap_tile_armor_down',gx:24,gy:7},
-        {id:'trap_line_pull',gx:7,gy:7},{id:'trap_line_pull',gx:13,gy:7},{id:'trap_line_pull',gx:19,gy:7},{id:'trap_line_pull',gx:25,gy:7},
-        {id:'trap_line_knockback',gx:8,gy:7},{id:'trap_line_knockback',gx:14,gy:7},{id:'trap_line_knockback',gx:20,gy:7},{id:'trap_line_knockback',gx:26,gy:7}
+        {id:'trap_tile_armor_down',gx:6,gy:7},{id:'trap_tile_armor_down',gx:12,gy:7},{id:'trap_tile_armor_down',gx:18,gy:7},{id:'trap_tile_armor_down',gx:24,gy:7}
       ],
       droneCounts:{sow:4,water:4,harvest:4,excavation:4},
       wave:{showcase_titan:96,brute:96,knight:48,shieldmaster:16,priest:8,drummer:8,wizard_speed:4,wizard_attack:4,wizard_heal:4},
@@ -399,6 +591,26 @@ const MAP_DEFINITIONS={
     }
   }
 };
+// The showcase keeps every line-trap combination visible at once: four
+// directions, each with levels 1–6.  Its broad horizontal route already has
+// two clear rows available, so no global map-size change is necessary.
+const displayShowcase=MAP_DEFINITIONS.display_test.showcase;
+function addShowcaseLineTraps(id,y){
+  const directions=['up','down','left','right'];
+  directions.forEach((direction,directionIndex)=>{
+    for(let level=1;level<=6;level++){
+      displayShowcase.traps.push({
+        id,
+        gx:1+directionIndex*6+(level-1),
+        gy:y,
+        direction,
+        level
+      });
+    }
+  });
+}
+addShowcaseLineTraps('trap_line_knockback',6);
+addShowcaseLineTraps('trap_line_pull',9);
 // Keep map authoring data compact while rotating the runtime map 90 degrees:
 // the former top edge becomes the left edge and the former bottom edge becomes the right edge.
 Object.values(MAP_DEFINITIONS).forEach(map=>{
@@ -421,11 +633,17 @@ function rebuildMapShapeCells(){
   });
 }
 function isMapCell(x,y){return mapShapeCells.has(`${x},${y}`)}
+function getMapBounds(){
+  const cells=[...mapShapeCells].map(key=>key.split(',').map(Number)).filter(([x,y])=>Number.isFinite(x)&&Number.isFinite(y));
+  if(!cells.length)return {minX:2,maxX:canvas.width-2,minY:2,maxY:canvas.height-2};
+  const xs=cells.map(([x])=>x),ys=cells.map(([,y])=>y);
+  return {minX:Math.min(...xs)*tile+2,maxX:(Math.max(...xs)+1)*tile-2,minY:Math.min(...ys)*tile+2,maxY:(Math.max(...ys)+1)*tile-2};
+}
 function mapObstacleCells(){const cells=[];(activeMap.obstacles||[]).forEach(([x1,y1,x2,y2])=>{for(let y=Math.min(y1,y2);y<=Math.max(y1,y2);y++)for(let x=Math.min(x1,x2);x<=Math.max(x1,x2);x++)cells.push([x,y])});return cells}
 function randomBlockedCells(){
   const occupied=new Set(mapObstacleCells().map(([x,y])=>`${x},${y}`));
   const reserved=new Set([...activeMap.spawns.map(({x,y})=>`${x},${y}`),`${activeMap.base.x},${activeMap.base.y}`]);
-  const showcase=activeMap.showcase;
+  const showcase=activeMapId==='display_test'?activeMap.showcase:null;
   for(const item of [...(showcase?.buildings||[]),...(showcase?.traps||[])])reserved.add(`${item.gx},${item.gy}`);
   const candidates=[];
   for(let y=0;y<CONFIG.gridRows;y++)for(let x=1;x<CONFIG.gridCols-1;x++){
@@ -445,28 +663,45 @@ function randomBlockedCells(){
   return placed;
 }
 function renderMapSelector(){let host=$('map-selector');if(!host){host=document.createElement('label');host.id='map-selector';host.className='map-selector-label';$('header-game-controls')?.appendChild(host)}host.innerHTML=`マップ <select id="map-select">${Object.entries(MAP_DEFINITIONS).map(([id,m])=>`<option value="${id}" ${id===activeMapId?'selected':''}>${m.name}</option>`).join('')}</select>`;host.querySelector('#map-select').onchange=e=>{activeMapId=e.target.value;activeMap=MAP_DEFINITIONS[activeMapId];resetGame()}}
-function configureShowcase(){
+ function configureDisplayTestShowcase(){
+  if(activeMapId!=='display_test')return;
   const showcase=activeMap.showcase;if(!showcase)return;
+  const levelOf=item=>Math.max(1,Math.min(6,Math.floor(Number(item.level)||1)));
   for(const item of showcase.buildings||[]){
-    const {type,gx,gy}=item;
-    if(type==='farm'){if(!grid[gy]?.[gx])addFarm(gx,gy);continue}
+    const {type,gx,gy}=item,level=levelOf(item);
+    if(type==='farm'){
+      if(!grid[gy]?.[gx]){
+        addFarm(gx,gy);
+        const farm=farms[farms.length-1];
+        farm.level=level;
+        farm.maxHp=Math.floor(100*(1+(level-1)*.5)*mult('farm_hp'));
+        farm.hp=farm.maxHp;
+      }
+      continue;
+    }
     if(grid[gy]?.[gx])continue;
-    grid[gy][gx]=type;buildings.push(new Building(type,gx,gy));
+    grid[gy][gx]=type;
+    const building=new Building(type,gx,gy);
+    building.level=level;
+    building.maxHp=100*Math.pow(1.35,level-1);
+    building.hp=building.maxHp;
+    buildings.push(building);
   }
   for(const item of showcase.traps||[]){
-    const definition=TRAP_DEFINITIONS[item.id];
-    if(definition&&!grid[item.gy]?.[item.gx]&&trapEngine.place(item.gx,item.gy,definition,lineDirection).ok){}
+    const baseDefinition=TRAP_DEFINITIONS[item.id];
+    const definition=item.level?{...baseDefinition,showcaseLevel:item.level}:baseDefinition;
+    if(definition&&!grid[item.gy]?.[item.gx]&&trapEngine.place(item.gx,item.gy,definition,item.direction||lineDirection).ok){}
   }
   for(const [type,count] of Object.entries(showcase.droneCounts||{})){
     for(let i=1;i<Math.max(1,Number(count)||0);i++)drones.push(new Drone(type));
   }
 }
-function configureActiveMap(){activeMap=MAP_DEFINITIONS[activeMapId];rebuildMapRouteCells();rebuildMapShapeCells();grid=Array.from({length:CONFIG.gridRows},()=>Array(CONFIG.gridCols).fill(null));farms=[];buildings=[];const blocked=new Set(mapObstacleCells().map(p=>`${p[0]},${p[1]}`));for(const key of blocked){const [x,y]=key.split(',').map(Number);if(x>=0&&y>=0&&x<CONFIG.gridCols&&y<CONFIG.gridRows&&isMapCell(x,y))grid[y][x]='blocked'}randomBlockedCells();addFarm(activeMap.base.x,activeMap.base.y);configureShowcase();renderMapSelector();renderAll()}
+function configureActiveMap(){activeMap=MAP_DEFINITIONS[activeMapId];rebuildMapRouteCells();rebuildMapShapeCells();grid=Array.from({length:CONFIG.gridRows},()=>Array(CONFIG.gridCols).fill(null));farms=[];buildings=[];const blocked=new Set(mapObstacleCells().map(p=>`${p[0]},${p[1]}`));for(const key of blocked){const [x,y]=key.split(',').map(Number);if(x>=0&&y>=0&&x<CONFIG.gridCols&&y<CONFIG.gridRows&&isMapCell(x,y))grid[y][x]='blocked'}randomBlockedCells();addFarm(activeMap.base.x,activeMap.base.y);configureDisplayTestShowcase();renderMapSelector();renderAll()}
 const legacyResetGameForMaps=resetGame;
 resetGame=function(){legacyResetGameForMaps();configureActiveMap();$('btn-start-wave').onclick=startWave;$('reset').onclick=resetGame};
 const legacyRepathForMaps=Enemy.prototype.repath;
 Enemy.prototype.repath=function(){return legacyRepathForMaps.call(this)};
-function canMapReachBase(extraX=null,extraY=null){const old=extraX===null?null:grid[extraY][extraX];if(extraX!==null)grid[extraY][extraX]='wall';const ok=activeMap.spawns.every(spawn=>findPath(spawn.x,spawn.y,activeMap.base.x,activeMap.base.y).length>0);if(extraX!==null)grid[extraY][extraX]=old;return ok}
+function canMapReachBase(extraX=null,extraY=null){const old=extraX===null?null:grid[extraY][extraX];if(extraX!==null)grid[extraY][extraX]='blocked';const ok=activeMap.spawns.every(spawn=>findPath(spawn.x,spawn.y,activeMap.base.x,activeMap.base.y).length>0);if(extraX!==null)grid[extraY][extraX]=old;return ok}
 validPlace=function(x,y){if(x<1||y<0||x>=CONFIG.gridCols-1||y>=CONFIG.gridRows||!isMapCell(x,y)||grid[y]?.[x])return false;return canMapReachBase(x,y)};
 const mainLayout=document.querySelector('main');
 if(mainLayout){mainLayout.style.maxWidth='none';mainLayout.style.width='100%';mainLayout.style.padding='12px 24px';}
@@ -678,23 +913,53 @@ renderDifficultyEditor=function(){
  host.querySelectorAll('[data-reg-wave]').forEach(i=>i.onchange=()=>{const d=active.difficulties[i.dataset.regLevel],w=d.waves[i.dataset.regWave];w[i.dataset.regEnemy]=Math.max(0,Math.floor(Number(i.value)||0));renderDifficultyEditor()});
  host.querySelectorAll('[data-sprite-key]').forEach(i=>i.onchange=()=>{try{const value=JSON.parse(i.value);Object.assign(SPRITE_CONFIG[i.dataset.spriteKey],value);renderDifficultyEditor()}catch(error){toast('スプライト設定のJSONが不正です')}});
 };
-const originalRenderAll=renderAll;renderAll=function(){originalRenderAll();const host=$('build-grid');Object.values(TRAP_DEFINITIONS).forEach(def=>{const b=document.createElement('button');b.dataset.build=def.id;b.innerHTML=`🪤 ${def.name}<span class="cost">$${getBuildingCost(def.id)}</span>`;host.appendChild(b);b.onclick=()=>buildMode=def.id});renderTrapEditor();renderEnemyEditor()};
+const originalRenderAll=renderAll;renderAll=function(){originalRenderAll();const host=$('build-grid');Object.values(TRAP_DEFINITIONS).forEach(def=>{const b=document.createElement('button');b.type='button';b.dataset.build=def.id;b.innerHTML=`🪤 ${def.name}<span class="cost">$${getBuildingCost(def.id)}</span>`;host.appendChild(b);b.onclick=()=>setBuildMode(def.id)});renderTrapEditor();renderEnemyEditor()};
 exportConfig=function(){const current=activeRegulation();if(current&&TECH_TREES?.length)current.techTrees=structuredClone(TECH_TREES);let out=`let savedConfig = ${JSON.stringify({common:{CONFIG,ENEMY_DEFINITIONS,ENEMY_ABILITY_CONFIG,TRAP_DEFINITIONS,BUFF_DEFINITIONS,EXCAVATION_DRONE_CONFIG,WAVE_BUFF_CONFIG,SPRITE_CONFIG},regulations:REGULATIONS,activeRegulationId,currentDifficultyLevel},null,2)};`;navigator.clipboard?.writeText(out);toast('設定をクリップボードへコピーしました');return out};
+function renderLineTrapBuildOptions(){
+  const host=$('build-grid');
+  if(!host)return;
+  Object.values(TRAP_DEFINITIONS).filter(def=>def.type==='line').forEach(def=>{
+    const button=[...host.querySelectorAll('[data-build]')].find(item=>item.dataset.build===def.id);
+    if(!button||button.closest('.line-build-option'))return;
+    const wrapper=document.createElement('div');
+    wrapper.className='line-build-option';
+    button.replaceWith(wrapper);
+    wrapper.appendChild(button);
+    button.onclick=()=>setBuildMode(def.id);
+    const options=document.createElement('div');
+    options.className='line-direction-options';
+    options.setAttribute('aria-label',`${def.name}の作動方向`);
+    LINE_DIRECTIONS.forEach(({value,label,icon})=>{
+      const directionButton=document.createElement('button');
+      directionButton.type='button';
+      directionButton.dataset.lineTrap=def.id;
+      directionButton.dataset.lineDirection=value;
+      directionButton.title=`${def.name}：${label}`;
+      directionButton.setAttribute('aria-label',`${def.name}を${label}向きで設置`);
+      directionButton.textContent=icon;
+      directionButton.onclick=event=>{event.stopPropagation();selectLineDirection(def.id,value)};
+      options.appendChild(directionButton);
+    });
+    wrapper.appendChild(options);
+  });
+  refreshLineDirectionButtons();
+}
 const renderAllWithLayout=renderAll;
 renderAll=function(){
   renderAllWithLayout();
-  document.querySelector('[data-build="wall"]')?.remove();
   document.querySelector('[data-build="slow"]')?.remove();
   document.querySelector('[data-build="select"]')?.remove();
   document.querySelectorAll('#build-grid [data-build]').forEach(button=>{const def=TRAP_DEFINITIONS[button.dataset.build];if(def)button.firstChild.textContent=`${def.icon||'🪤'} ${def.name}`});
-  const selectButton=$('btn-select-mode');if(selectButton)selectButton.onclick=()=>{buildMode='select';selectButton.classList.add('active')};
+  renderLineTrapBuildOptions();
+  setBuildMode(buildMode);
+  const selectButton=$('btn-select-mode');if(selectButton)selectButton.onclick=()=>setBuildMode('select');
 };
 renderAll();
 setTimeout(()=>document.head.insertAdjacentHTML('beforeend','<style>.brand{display:none}.header-game-controls{display:flex;gap:10px;align-items:center;margin-left:auto}.header-game-controls select{background:var(--panel2);border:1px solid var(--line);color:var(--text);padding:7px 8px;border-radius:5px}.top-actions{display:grid;grid-template-columns:1.4fr 1fr;gap:8px}.select-action{font-size:15px;border-color:var(--cyan)}.select-action.active{background:#236d78}.drone-grid{grid-template-columns:1fr 1fr}</style>'),0);
 
 // Keep map-aware wave spawning as the final startWave implementation because
 // the optional enemy editor extension above also decorates this function.
-startWave=function(){if(inWave||wave>=CONFIG.maxWave||!farms.length)return;BUFF_RUNTIME.waveActivations=0;BUFF_RUNTIME.waveBuildings=0;BUFF_RUNTIME.waveTemp={};wave++;inWave=true;spawning=true;const showcase=activeMap.showcase;const cfg=(showcase?.wave&&wave<=CONFIG.maxWave)?showcase.wave:(difficultyWaveConfig(wave)||{}),q=[];Object.entries(cfg).forEach(([id,count])=>{for(let i=0;i<getDifficultyEnemyCount(count);i++)q.push(id)});let i=0;function spawn(){if(i<q.length){const spawnPoint=activeMap.spawns[i%activeMap.spawns.length],e=new Enemy(q[i++]);e.spawnId=spawnPoint.id;e.routeId=spawnPoint.id;e.x=spawnPoint.x*tile+tile/2;e.y=spawnPoint.y*tile+tile/2;e.path=[];e.target=farms[0]||null;e.repath();enemies.push(e);spawnTimer=scheduleGameTask(spawn,Number(showcase?.spawnInterval??CONFIG.waveSpawnInterval)||180)}else spawning=false}spawn();renderAll()};
+startWave=function(){if(inWave||wave>=CONFIG.maxWave||!farms.length)return;BUFF_RUNTIME.waveActivations=0;BUFF_RUNTIME.waveBuildings=0;BUFF_RUNTIME.waveTemp={};wave++;inWave=true;spawning=true;const showcase=activeMapId==='display_test'?activeMap.showcase:null;const cfg=(showcase?.wave&&wave<=CONFIG.maxWave)?showcase.wave:(difficultyWaveConfig(wave)||{}),q=[];if(activeMapId==='display_test'){Object.entries(cfg).forEach(([id,count])=>{const baseCount=getDifficultyEnemyCount(count),immuneCount=Math.max(1,Math.round(baseCount/2));let normalLeft=baseCount,immuneLeft=immuneCount;while(normalLeft>0||immuneLeft>0){if(normalLeft>0){q.push({id,lineTrapImmune:false});normalLeft--;}if(normalLeft>0){q.push({id,lineTrapImmune:false});normalLeft--;}if(immuneLeft>0){q.push({id,lineTrapImmune:true});immuneLeft--;}}});}else{Object.entries(cfg).forEach(([id,count])=>{for(let i=0;i<getDifficultyEnemyCount(count);i++)q.push(id)});}let i=0;function spawn(){if(i<q.length){const spawnPoint=activeMap.spawns[i%activeMap.spawns.length],item=q[i++],enemyId=typeof item==='object'?item.id:item,isImmune=typeof item==='object'&&!!item.lineTrapImmune,e=new Enemy(enemyId);if(isImmune)e.lineTrapImmune=true;e.spawnId=spawnPoint.id;e.routeId=spawnPoint.id;e.x=spawnPoint.x*tile+tile/2;e.y=spawnPoint.y*tile+tile/2;e.path=[];e.target=farms[0]||null;e.repath();enemies.push(e);spawnTimer=scheduleGameTask(spawn,Number(showcase?.spawnInterval??CONFIG.waveSpawnInterval)||180)}else spawning=false}spawn();renderAll()};
 draw=function(){
  // Keep the map backdrop in the final sprite-aware render path.  This used
  // to be skipped here, which made the route-expanded map shape disappear
@@ -704,10 +969,10 @@ draw=function(){
  for(const key of mapShapeCells){const [x,y]=key.split(',').map(Number),v=grid[y]?.[x];if(v==='blocked'){if(!drawSprite('blocked',x*tile+tile/2,y*tile+tile/2)) {ctx.fillStyle='#263844';ctx.fillRect(x*tile+2,y*tile+2,tile-4,tile-4)}}else if(v==='slow'){if(!drawSprite('slow',x*tile+tile/2,y*tile+tile/2)){ctx.fillStyle=colors.slow;ctx.fillRect(x*tile+1,y*tile+1,tile-2,tile-2)}}else if(!v)drawSprite('floor',x*tile+tile/2,y*tile+tile/2)}
  const spawnSprites=new Set(activeMap.spawns.map(s=>`${s.x},${s.y}`));activeMap.spawns.forEach(s=>{if(!drawSprite('spawn',s.x*tile+tile/2,s.y*tile+tile/2)){ctx.fillStyle='#f1d16a';ctx.beginPath();ctx.moveTo(s.x*tile+tile/2,s.y*tile+tile/2+8);ctx.lineTo(s.x*tile+tile/2-7,s.y*tile+tile/2-5);ctx.lineTo(s.x*tile+tile/2+7,s.y*tile+tile/2-5);ctx.closePath();ctx.fill()}});if(!drawSprite('base',activeMap.base.x*tile+tile/2,activeMap.base.y*tile+tile/2)){ctx.strokeStyle='#72e0a0';ctx.beginPath();ctx.arc(activeMap.base.x*tile+tile/2,activeMap.base.y*tile+tile/2,Math.max(9,tile*.42),0,Math.PI*2);ctx.stroke()}
  for(let y=0;y<CONFIG.gridRows;y++)for(let x=0;x<CONFIG.gridCols;x++){const v=grid[y]?.[x];if(!v||v==='blocked'||v==='slow')continue;if(!drawSprite(v,x*tile+tile/2,y*tile+tile/2)){ctx.fillStyle=colors[v]||'#596b72';ctx.fillRect(x*tile+1,y*tile+1,tile-2,tile-2)}}
- farms.forEach(f=>{if(!drawSprite('farm',f.gx*tile+tile/2,f.gy*tile+tile/2)){ctx.fillStyle=colors.farm;ctx.fillRect(f.gx*tile+2,f.gy*tile+2,tile-4,tile-4)}if(f.state===1||f.state===2||f.state===3){ctx.strokeStyle=f.state===1?'#8eea6b':f.state===2?'#f3c85b':'#6ed5ef';ctx.lineWidth=2;ctx.beginPath();ctx.arc(f.gx*tile+tile/2,f.gy*tile+tile/2,Math.max(4,5+Math.sin((TEST_RUNTIME.frame||0)/5)),0,Math.PI*2);ctx.stroke()}ctx.fillStyle='#19352a';ctx.fillRect(f.gx*tile+3,f.gy*tile+tile-5,(tile-6)*Math.max(0,f.hp/f.maxHp),2)});
- buildings.forEach(b=>{if(!drawSprite(b.type,b.gx*tile+tile/2,b.gy*tile+tile/2)){ctx.fillStyle=colors[b.type]||'#798c96';ctx.fillRect(b.gx*tile+3,b.gy*tile+3,tile-6,tile-6)}});
- enemies.forEach(e=>{if(!drawEnemySprite(e)){ctx.fillStyle=e.definition?.color||'#e85d5d';ctx.beginPath();ctx.arc(e.x,e.y,8*ENEMY_SPRITE_LAYOUT.displayScale,0,Math.PI*2);ctx.fill()}});
- drones.forEach(d=>{const droneKey={sow:'droneSow',water:'droneWater',harvest:'droneHarvest',excavation:'droneExcavation'}[d.type]||'drone';if(!drawSprite(droneKey,d.x,d.y,{definition:{color:d.color}})){ctx.fillStyle=d.color;ctx.beginPath();ctx.arc(d.x,d.y,4,0,Math.PI*2);ctx.fill()}});bullets.forEach(b=>{if(!drawProjectileSprite(b.t?.type,b.x,b.y,{rotation:b.angle})){ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(b.x,b.y,2,0,Math.PI*2);ctx.fill()}});effects.forEach(e=>{if(e instanceof Explosion){if(!drawSprite('explosion',e.x,e.y,{definition:{}})){ctx.strokeStyle='#ffb347';ctx.beginPath();ctx.arc(e.x,e.y,Math.max(2,20-e.life),0,Math.PI*2);ctx.stroke()}}else if(e instanceof SpriteEffect){const key=e.type.endsWith('-effect')?e.type.replace('-effect','')+'Effect':'trapEffect';if(!drawSprite(key,e.x,e.y,{definition:{}})){ctx.fillStyle=e.type==='excavation-effect'?'#d596ff':'#d48cff';ctx.globalAlpha=Math.max(0,e.life/24);ctx.fillRect(e.x-5,e.y-5,10,10);ctx.globalAlpha=1}}else if(e.t){ctx.save();ctx.fillStyle=e.c;ctx.globalAlpha=Math.min(1,e.life/18);ctx.font=e.kind==='trap-effect'?'bold 10px sans-serif':e.kind==='enemy-damage'?'bold 12px sans-serif':'bold 11px sans-serif';ctx.textAlign='center';ctx.shadowColor='#101820';ctx.shadowBlur=3;ctx.fillText(e.t,e.x,e.y);ctx.restore()}});trapEngine.draw(ctx);
+ farms.forEach(f=>{if(!drawBuildingSprite(f))drawCellFallback('farm',f.gx,f.gy);if(f.state===1||f.state===2||f.state===3){ctx.strokeStyle=f.state===1?'#8eea6b':f.state===2?'#6ed5ef':'#f3c85b';ctx.lineWidth=2;ctx.beginPath();ctx.arc(f.gx*tile+tile/2,f.gy*tile+tile/2,Math.max(4,5+Math.sin((TEST_RUNTIME.frame||0)/5)),0,Math.PI*2);ctx.stroke()}ctx.fillStyle='#19352a';ctx.fillRect(f.gx*tile+3,f.gy*tile+tile-5,(tile-6)*Math.max(0,f.hp/f.maxHp),2)});
+ buildings.forEach(b=>{if(!drawBuildingSprite(b))drawCellFallback(b.type,b.gx,b.gy)});
+ enemies.forEach(e=>{if(!drawEnemySprite(e)){ctx.fillStyle=e.definition?.color||'#e85d5d';ctx.beginPath();ctx.arc(e.x,e.y,8*ENEMY_SPRITE_LAYOUT.displayScale,0,Math.PI*2);ctx.fill()}if(e.lineTrapImmune){ctx.save();ctx.strokeStyle='#4dd0e1';ctx.lineWidth=2;ctx.beginPath();ctx.arc(e.x,e.y,Math.max(9,tile*.42),0,Math.PI*2);ctx.stroke();ctx.restore()}});
+ drones.forEach(d=>{if(!drawDroneSprite(d)){ctx.fillStyle=d.color;ctx.fillRect(d.x-tile/2,d.y-tile/2,tile,tile)}});bullets.forEach(b=>{if(!drawProjectileSprite(b.t?.type,b.x,b.y,{rotation:b.angle})){ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(b.x,b.y,2,0,Math.PI*2);ctx.fill()}});effects.forEach(e=>{if(e instanceof Explosion){if(!drawSprite('explosion',e.x,e.y,{definition:{}})){ctx.strokeStyle='#ffb347';ctx.beginPath();ctx.arc(e.x,e.y,Math.max(2,20-e.life),0,Math.PI*2);ctx.stroke()}}else if(e instanceof SpriteEffect){const key=e.type.endsWith('-effect')?e.type.replace('-effect','')+'Effect':'trapEffect';if(!drawSprite(key,e.x,e.y,{definition:{}})){ctx.fillStyle=e.type==='excavation-effect'?'#d596ff':'#d48cff';ctx.globalAlpha=Math.max(0,e.life/24);ctx.fillRect(e.x-5,e.y-5,10,10);ctx.globalAlpha=1}}else if(e.t){ctx.save();ctx.fillStyle=e.c;ctx.globalAlpha=Math.min(1,e.life/18);ctx.font=e.kind==='trap-effect'?'bold 10px sans-serif':e.kind==='enemy-damage'?'bold 12px sans-serif':'bold 11px sans-serif';ctx.textAlign='center';ctx.shadowColor='#101820';ctx.shadowBlur=3;ctx.fillText(e.t,e.x,e.y);ctx.restore()}});trapEngine.draw(ctx);
 };
 document.getElementById('btn-start-wave').onclick=startWave;
 resetGame();
@@ -759,14 +1024,14 @@ function testReset(options={}){
 }
 function testStep(frames=1){const count=Math.max(0,Math.floor(Number(frames)||0));for(let i=0;i<count;i++){for(let speed=0;speed<gameSpeed;speed++){runTestTasks();update()}TEST_RUNTIME.frame++}return testState()}
 function testSpawnEnemy(id,x,y){if(!ENEMY_DEFINITIONS[id])throw new Error(`Unknown enemy: ${id}`);const e=new Enemy(id),px=Number(x),py=Number(y);e.spawnId=id;e.x=Number.isFinite(px)?px*tile+tile/2:activeMap.spawns[0].x*tile+tile/2;e.y=Number.isFinite(py)?py*tile+tile/2:activeMap.spawns[0].y*tile+tile/2;e.target=farms[0]||null;if(e.target)e.repath();enemies.push(e);inWave=true;spawning=false;return testEnemyState(e)}
-function testPlaceTrap(id,x,y){const definition=TRAP_DEFINITIONS[id];if(!definition)throw new Error(`Unknown trap: ${id}`);const result=trapEngine.place(Number(x),Number(y),definition,lineDirection);if(!result.ok)throw new Error(result.error);inWave=true;return {gx:Number(x),gy:Number(y),definition:structuredClone(definition)}}
-function testPlaceTrapDefinition(definition,x,y){const result=trapEngine.place(Number(x),Number(y),structuredClone(definition),lineDirection);if(!result.ok)throw new Error(result.error);inWave=true;return {gx:Number(x),gy:Number(y),definition:structuredClone(definition)}}
-function testTryPlaceTrapDefinition(definition,x,y){const result=trapEngine.place(Number(x),Number(y),structuredClone(definition),lineDirection);if(result.ok)inWave=true;return {ok:result.ok,error:result.error||null}}
+function testPlaceTrap(id,x,y,direction){const definition=TRAP_DEFINITIONS[id];if(!definition)throw new Error(`Unknown trap: ${id}`);const result=trapEngine.place(Number(x),Number(y),definition,direction||lineDirection);if(!result.ok)throw new Error(result.error);inWave=true;return {gx:Number(x),gy:Number(y),definition:structuredClone(result.trap.definition)}}
+function testPlaceTrapDefinition(definition,x,y,direction){const result=trapEngine.place(Number(x),Number(y),structuredClone(definition),direction||lineDirection);if(!result.ok)throw new Error(result.error);inWave=true;return {gx:Number(x),gy:Number(y),definition:structuredClone(result.trap.definition)}}
+function testTryPlaceTrapDefinition(definition,x,y,direction){const result=trapEngine.place(Number(x),Number(y),structuredClone(definition),direction||lineDirection);if(result.ok)inWave=true;return {ok:result.ok,error:result.error||null}}
 function testSetWaveActive(value){inWave=Boolean(value);spawning=false;return testState()}
 function testSetDifficultyConfig(level,config){const n=normalizeDifficultyLevel(level);activeRegulation().difficulties[n]=structuredClone(config);currentDifficultyLevel=n;return structuredClone(activeRegulation().difficulties[n])}
 function testSetWaveConfig(config){const d=activeRegulation().difficulties[currentDifficultyLevel];d.waves[wave+1]=structuredClone(config);return structuredClone(d.waves)}
 function testSetMaxWave(value){CONFIG.maxWave=Math.max(1,Math.floor(Number(value)||1));return CONFIG.maxWave}
-function testBlockCell(x,y,value='wall'){const gx=Number(x),gy=Number(y);if(!grid[gy])throw new Error('Unknown grid row');grid[gy][gx]=value;return testState()}
+function testBlockCell(x,y,value='blocked'){const gx=Number(x),gy=Number(y);if(!grid[gy])throw new Error('Unknown grid row');grid[gy][gx]=value;return testState()}
 function testFindPath(sx,sy,tx,ty){return findPath(Number(sx),Number(sy),Number(tx),Number(ty))}
 function testTryStartWave(){const before=testState();startWave();return {before,after:testState()}}
 function testApplyBuff(id){const definition=buffDefinition(id);if(!definition)throw new Error(`Unknown buff: ${id}`);if(typeof addExtendedBuff==='function'&&EXTENDED_BUFFS.defs.some(b=>b[0]===id))addExtendedBuff(id);else{buffs[id]=id;if(definition[2]==='instant_money')money+=Number(definition[3])||0}return id}

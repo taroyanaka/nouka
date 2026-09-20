@@ -106,13 +106,13 @@ AIはChromeのブラウザ操作機能を使い、次の手順で実行する。
 - `step(frames)`: 指定フレーム数だけ手動更新
 - `getState()`: 現在のゲーム状態を取得
 - `spawnEnemy(id, x, y)`: 敵を指定座標へ生成
-- `placeTrap(id, x, y)`: 定義済み罠を設置
-- `placeTrapDefinition(definition, x, y)`: テスト用罠定義を設置
-- `tryPlaceTrapDefinition(definition, x, y)`: 例外にせず設置可否を返す
+- `placeTrap(id, x, y[, direction])`: 定義済み罠を設置。ライン罠は `up` / `down` / `left` / `right` を任意指定できる
+- `placeTrapDefinition(definition, x, y[, direction])`: テスト用罠定義を設置。ライン罠は設置時の方向を検証できる
+- `tryPlaceTrapDefinition(definition, x, y[, direction])`: 例外にせず設置可否を返す
 - `setWaveActive(value)`: Wave中フラグを設定
 - `setDifficultyConfig(level, config)` / `setWaveConfig(config)`: 難易度・次Wave設定を差し替え
 - `setMaxWave(value)`: 最大Waveを差し替え
-- `blockCell(x, y, value)` / `findPath(sx, sy, tx, ty)`: 障害物と経路探索を操作
+- `blockCell(x, y, value = 'blocked')` / `findPath(sx, sy, tx, ty)`: 障害物と経路探索を操作
 - `tryStartWave()` / `startWave()`: Wave開始と開始前後状態の取得
 - `applyBuff(id)`: バフを適用
 - `placeBuilding(type, x, y)` / `placeFarm(x, y)` / `removeAllFarms()`: テスト用建築・畑操作

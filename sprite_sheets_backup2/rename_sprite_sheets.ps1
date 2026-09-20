@@ -13,6 +13,7 @@ $defaultNames = @(
     'spawn'
     'base'
     'farm'
+    'wall'
     'lab'
     'mg'
     'missile'

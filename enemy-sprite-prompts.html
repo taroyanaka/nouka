@@ -48,6 +48,9 @@
       color: #d9f6ed;
     }
     .enemy-list { display: grid; gap: 16px; }
+    .sprite-section { margin-bottom: 24px; }
+    .sprite-section > h2 { margin: 0 0 10px; }
+    .sprite-section > p { margin: 0 0 12px; }
     .enemy-card { overflow: hidden; }
     .enemy-header {
       display: flex;
@@ -115,9 +118,27 @@
       <div class="notice">
         出力仕様：<code>2048×6144px</code>、アスペクト比<code>1:3</code>、透明PNG、<code>4列×12行</code>、1セル<code>512×512px</code>、合計48セル。各セルの固定ピボットは<code>(256,472)</code>。生成UIの比率設定は<code>Auto</code>を選択し、<code>5:2 Banner</code>は選択しないでください。
       </div>
+      <div class="notice">
+        建造物・ドローンは敵とは別仕様です。建造物は<code>1280×1280px / 12列×12行</code>、ドローンは<code>1280×1280px / 6列×6行</code>で生成してください。マシンガン、ミサイル、ライン罠は右向き1方向だけを作り、ゲーム内で<code>script.js</code>が4方向へ回転します。
+      </div>
     </section>
 
-    <section id="enemy-list" class="enemy-list" aria-label="敵ごとのプロンプト"></section>
+    <section class="sprite-section" aria-labelledby="structure-heading">
+      <h2 id="structure-heading">建造物・罠のスプライトシート</h2>
+      <p class="muted">全カード共通：1280×1280px、12列×12行、待機中Lv.1〜6と作動中Lv.1〜6。各カードは対象を1種類だけ収録します。</p>
+      <div id="structure-list" class="enemy-list" aria-label="建造物と罠ごとのプロンプト"></div>
+    </section>
+
+    <section class="sprite-section" aria-labelledby="drone-heading">
+      <h2 id="drone-heading">ドローンのスプライトシート</h2>
+      <p class="muted">全カード共通：1280×1280px、6列×6行、合計36セル。行は待機中、移動中（上・下・左・右）、作業中の順です。</p>
+      <div id="drone-list" class="enemy-list" aria-label="ドローンごとのプロンプト"></div>
+    </section>
+
+    <section class="sprite-section" aria-labelledby="enemy-heading">
+      <h2 id="enemy-heading">敵のスプライトシート</h2>
+      <div id="enemy-list" class="enemy-list" aria-label="敵ごとのプロンプト"></div>
+    </section>
   </main>
 
   <script>
@@ -241,8 +262,143 @@
       { name: 'Healing Wizard / 魔法使い（回復）', file: 'wizard_heal.png', description: '淡い色のローブ、緑または金色の魔法装飾、発光する回復結晶付きの杖を持つ回復型魔法使い。' }
     ];
 
+    const buildingCommonPrompt = `2Dゲーム用の建造物または罠のスプライトシートを1枚だけ作成してください。
+
+【最重要】
+- 1回の生成で作成する対象は1種類だけ
+- 指定された対象以外の建造物、罠、人物、敵、動物、背景を描かない
+- 1枚の画像に、指定された12種類の状態を収録する
+- 完成したスプライトシート画像だけを出力する
+
+【画像仕様】
+- 画像形式：PNG
+- キャンバスサイズ：1280×1280ピクセル、正方形
+- 完全な透明背景、完全なアルファチャンネル
+- 12列×12行の正確なグリッド、合計144セル
+- 1セルは画像全体を12等分した同じサイズ（約106.667×106.667ピクセル）
+- グリッド線、区切り線、背景色、チェック柄を描かない
+- 画像内に文字、数字、ラベル、説明文、UIを入れない
+- 各セルには対象の建造物または罠を1つだけ配置する
+
+【行の構成】
+1行目：待機中 Lv.1、12フレーム
+2行目：待機中 Lv.2、12フレーム
+3行目：待機中 Lv.3、12フレーム
+4行目：待機中 Lv.4、12フレーム
+5行目：待機中 Lv.5、12フレーム
+6行目：待機中 Lv.6（最大）、12フレーム
+7行目：作動中 Lv.1、12フレーム
+8行目：作動中 Lv.2、12フレーム
+9行目：作動中 Lv.3、12フレーム
+10行目：作動中 Lv.4、12フレーム
+11行目：作動中 Lv.5、12フレーム
+12行目：作動中 Lv.6（最大、これ以上レベルアップしても同じグラフィック）、12フレーム
+
+【アニメーションと位置固定】
+- 同じ行の12フレームは、点滅、発光、可動部、回転部、煙などを自然に変化させる
+- ただし建造物全体の中心、接地位置、縮尺、外形の基準位置は全フレームで固定する
+- レベルが上がるほど、対象の特徴、装甲、発光、規模感を段階的に強化する
+- Lv.6の見た目を、待機中・作動中ともに上限として維持する
+- 作動中は対象の機能が明確に分かる状態にする
+- ピクセルアート風の明瞭な輪郭、ゲーム内で小さく表示しても判別できるシルエットにする`;
+
+    const droneCommonPrompt = `2Dゲーム用のドローンのスプライトシートを1枚だけ作成してください。
+
+【最重要】
+- 1回の生成で作成するドローンは1種類だけ
+- 指定されたドローン以外のドローン、人物、敵、動物、建造物、背景を描かない
+- 1枚の画像に、指定された6種類の状態を収録する
+- 完成したスプライトシート画像だけを出力する
+
+【画像仕様】
+- 画像形式：PNG
+- キャンバスサイズ：1280×1280ピクセル、正方形
+- 完全な透明背景、完全なアルファチャンネル
+- 6列×6行の正確なグリッド、合計36セル
+- 1セルは画像全体を6列×6行に分割した同じサイズ（約213.333×213.333ピクセル）
+- グリッド線、区切り線、背景色、チェック柄を描かない
+- 画像内に文字、数字、ラベル、説明文、UIを入れない
+- 各セルには対象のドローンを1機だけ配置する
+
+【行の構成】
+1行目：待機中、6フレーム
+2行目：移動中・上向き、6フレーム
+3行目：移動中・下向き、6フレーム
+4行目：移動中・左向き、6フレーム
+5行目：移動中・右向き、6フレーム
+6行目：作業中、6フレーム
+
+【アニメーションと位置固定】
+- 6フレームで浮遊、ローター、脚、アーム、採取装置などを自然に動かす
+- 移動中の各行は、その行に指定された方向を明確に向く
+- ドローン全体の中心位置と縮尺を各セルで安定させる
+- 待機中はその場で浮遊し、作業中は対象の作業装置が動く
+- 同じドローンの形状、配色、装備、視点、透明背景を全36セルで維持する
+- ピクセルアート風の明瞭な輪郭にする`;
+
+    const structures = [
+      { name: 'Farm / 畑', file: 'farm.png', description: '作物を育てる小型の農地。土、畝、芽、成長した作物が分かる、上から見たゲーム用の建造物。' },
+      { name: 'Lab / 研究所', file: 'lab.png', description: '科学力を生産する小型研究施設。アンテナ、発光する研究装置、試験容器を備える。' },
+      { name: 'Machine Gun / マシンガン', file: 'mg.png', description: '農地を守る固定式マシンガン砲台。銃身、給弾機構、台座を明確に描く。右向きの1方向だけを作る。', singleDirection: true },
+      { name: 'Missile / ミサイル', file: 'missile.png', description: '農地を守る固定式ミサイル砲台。発射筒、弾頭、台座を明確に描く。右向きの1方向だけを作る。', singleDirection: true },
+      { name: 'Slow Tile / 減速タイル', file: 'trap_tile_slow.png', description: '敵の移動を遅くする青いタイル型罠。粘性のある発光パターンを持つ。' },
+      { name: 'Poison Tile / 毒タイル', file: 'trap_tile_poison.png', description: '毒を散布する紫色のタイル型罠。毒の紋様や小さな薬液発光を持つ。' },
+      { name: 'Burn Tile / 焼夷タイル', file: 'trap_tile_burn.png', description: '焼夷効果を持つ赤橙色のタイル型罠。小さな炎と熱の発光を持つ。' },
+      { name: 'Armor Break Tile / 装甲破壊タイル', file: 'trap_tile_armor_down.png', description: '敵の装甲を弱める金色のタイル型罠。破砕された盾や装甲の意匠を持つ。' },
+      { name: 'Pull Line / 吸引ライン', file: 'trap_line_pull.png', description: '敵を引き寄せるライン罠。右向きの光線や吸引フィールドを持つ、1方向だけの設置スプライト。', singleDirection: true },
+      { name: 'Knockback Line / 撃退ライン', file: 'trap_line_knockback.png', description: '敵を押し返すライン罠。右向きの衝撃波や放射フィールドを持つ、1方向だけの設置スプライト。', singleDirection: true }
+    ];
+
+    const droneAssets = [
+      { name: 'Sow Drone / 播種ドローン', file: 'droneSow.png', description: '畑に種をまく緑色の農業ドローン。種まき用のホッパーまたはアームを備える。' },
+      { name: 'Water Drone / 散水ドローン', file: 'droneWater.png', description: '畑に水をまく青色の農業ドローン。散水ノズル、水タンク、水滴の意匠を備える。' },
+      { name: 'Harvest Drone / 収穫ドローン', file: 'droneHarvest.png', description: '成熟した作物を収穫する金色の農業ドローン。収穫アームまたは回収コンテナを備える。' },
+      { name: 'Excavation Drone / 発掘ドローン', file: 'droneExcavation.png', description: '地面や鉱床を発掘する紫色のドローン。ドリル、掘削アーム、発光する探査装置を備える。' }
+    ];
+
     function buildPrompt(enemy) {
       return `${commonPrompt}\n\n【対象の敵】\n${enemy.name}\n\n【対象の外見】\n${enemy.description}\n\n【この生成で守る追加条件】\nこのスプライトシートには「${enemy.name}」だけを描いてください。\nこの1枚の画像に、idle / walk、hit、deathの全アニメーションを収録してください。\n他の敵キャラクターは絶対に描かないでください。\n出力ファイル名は「${enemy.file}」です。\n\n${negativePrompt}`;
+    }
+
+    function buildBuildingPrompt(asset) {
+      const directionRule = asset.singleDirection
+        ? '\nこの対象は右向きの1方向だけを描いてください。上下左右の別フレームは作らず、ゲーム内でscript.jsが発射方向に合わせて0度、90度、180度、270度へ回転します。回転の中心は建造物の中心に固定してください。'
+        : '';
+      return `${buildingCommonPrompt}\n\n【対象の建造物・罠】\n${asset.name}\n\n【対象の外見】\n${asset.description}${directionRule}\n\n【この生成で守る追加条件】\nこのスプライトシートには「${asset.name}」だけを描いてください。\n出力ファイル名は「${asset.file}」です。\n\n【Negative prompt】\n複数の建造物、複数の罠、敵、人物、動物、背景、風景、床、地面、文字、数字、ラベル、説明文、UI、ロゴ、透かし、白背景、黒背景、色付き背景、チェック柄、不透明背景、グリッド線、区切り線、セル境界線、フレームごとの自動トリミング、フレームごとの中央寄せ、建造物全体の位置ずれ、接地位置のずれ、縮尺の変化、対象の切断、異なるセルサイズ、12列×12行の崩れ、144セル未満、144セル超過、レベル順序の入れ替え、Lv.6を超える外観変化、アンチエイリアス、ぼやけた輪郭、JPG、JPEG`;
+    }
+
+    function buildDronePrompt(asset) {
+      return `${droneCommonPrompt}\n\n【対象のドローン】\n${asset.name}\n\n【対象の外見】\n${asset.description}\n\n【この生成で守る追加条件】\nこのスプライトシートには「${asset.name}」だけを描いてください。\n移動中の上・下・左・右は、script.jsがドローンの実際の移動方向に応じて行を選択します。行をまたいで方向を混在させないでください。\n出力ファイル名は「${asset.file}」です。\n\n【Negative prompt】\n複数のドローン、複数キャラクター、敵、人物、動物、建造物、背景、風景、床、地面、文字、数字、ラベル、説明文、UI、ロゴ、透かし、白背景、黒背景、色付き背景、チェック柄、不透明背景、グリッド線、区切り線、セル境界線、フレームごとの自動トリミング、フレームごとの中央寄せ、ドローン全体の位置ずれ、縮尺の変化、方向行の混在、待機中と作業中の混在、対象の切断、異なるセルサイズ、6列×6行の崩れ、36セル未満、36セル超過、アンチエイリアス、ぼやけた輪郭、JPG、JPEG`;
+    }
+
+    function createAssetCard(asset, index, kind) {
+      const card = document.createElement('article');
+      card.className = 'enemy-card';
+      const isDrone = kind === 'drone';
+      card.innerHTML = `
+        <div class="enemy-header">
+          <div><span class="enemy-index">${String(index + 1).padStart(2, '0')}</span>　<h2 style="display:inline">${asset.name}</h2></div>
+          <div class="file-label">${asset.file}</div>
+        </div>
+        <div class="enemy-body">
+          <p class="description">${asset.description}</p>
+          <textarea class="prompt-box" readonly aria-label="${asset.name}の生成プロンプト"></textarea>
+          <div class="actions">
+            <button type="button" data-copy="prompt">プロンプトをコピー</button>
+            <button type="button" data-copy="filename">ファイル名をコピー</button>
+          </div>
+          <p class="copy-status" aria-live="polite"></p>
+        </div>`;
+      const textarea = card.querySelector('.prompt-box');
+      textarea.value = isDrone ? buildDronePrompt(asset) : buildBuildingPrompt(asset);
+      const status = card.querySelector('.copy-status');
+      card.querySelector('[data-copy="prompt"]').addEventListener('click', async (event) => {
+        await copyText(textarea.value, event.currentTarget, status, 'プロンプト');
+      });
+      card.querySelector('[data-copy="filename"]').addEventListener('click', async (event) => {
+        await copyText(asset.file, event.currentTarget, status, 'ファイル名');
+      });
+      return card;
     }
 
     function createCard(enemy, index) {
@@ -300,6 +456,10 @@
 
     const list = document.querySelector('#enemy-list');
     enemies.forEach((enemy, index) => list.appendChild(createCard(enemy, index)));
+    const structureList = document.querySelector('#structure-list');
+    structures.forEach((asset, index) => structureList.appendChild(createAssetCard(asset, index, 'structure')));
+    const droneList = document.querySelector('#drone-list');
+    droneAssets.forEach((asset, index) => droneList.appendChild(createAssetCard(asset, index, 'drone')));
   </script>
 </body>
 </html>

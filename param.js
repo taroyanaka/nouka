@@ -189,6 +189,7 @@ let savedConfig = (() => {
   const standardRegulation = {
     id: 'standard',
     name: '標準設定',
+    CONFIG: { cropGrowSpeed: 3.0, droneBaseSpeed: 1.6 },
     difficulties: makeDifficulties(standardWaves),
     techTrees: standardTechTrees
   };
@@ -196,6 +197,7 @@ let savedConfig = (() => {
   const coinRegulation = {
     id: 'coin_pusher',
     name: '豊穣戦線：コインプッシャー型',
+    CONFIG: { cropGrowSpeed: 3.0, droneBaseSpeed: 1.6 },
     difficulties: {
       1: { initialMoney: 1000000, waves: scaledWaves(1.0) },
       2: { initialMoney: 1000000, waves: scaledWaves(1.3) },
@@ -218,6 +220,7 @@ let savedConfig = (() => {
     ...clone(coinRegulation),
     id: 'coin_pusher_2',
     name: 'CPレギュ2',
+    CONFIG: { cropGrowSpeed: 3.0, droneBaseSpeed: 1.6 },
     difficulties: {
       1: { initialMoney: 1000000, waves: cp2ScaledWaves(1.0) },
       2: { initialMoney: 1000000, waves: cp2ScaledWaves(1.15) },
@@ -232,6 +235,7 @@ let savedConfig = (() => {
     ...clone(cp2Regulation),
     id: 'coin_pusher_3',
     name: 'CPレギュ3',
+    CONFIG: { cropGrowSpeed: 3.0, droneBaseSpeed: 1.6 },
     techTrees: clone(cp2TechTrees)
   };
 

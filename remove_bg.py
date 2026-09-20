@@ -3,7 +3,7 @@ from PIL import Image
 import os
 from pathlib import Path
 
-def remove_background(input_path: Path, output_path: Path, resize_width: int = 768, resize_height: int = 1024):
+def remove_background(input_path: Path, output_path: Path, resize_width: int = 2304, resize_height: int = 4096):
     """1枚の画像の背景を透過にする（事前にリサイズを行う）"""
     print(f"処理中: {input_path.name}")
     try:

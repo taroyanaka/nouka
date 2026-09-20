@@ -129,45 +129,57 @@
 
 ### 5.4 Enemy
 
-敵は `ENEMY_DEFINITIONS` の通常敵13種に加え、表示確認マップ専用の `showcase_titan` を持つ。`showcase_titan` は通常のレギュレーションWaveには登録せず、`display_test` マップ固有Waveでのみ使用する。
+敵は `ENEMY_DEFINITIONS` に定義された22種類を使用する。
 
-各定義は英語名、日本語名、分類、HP、速度、攻撃力、装甲率、罠耐性、能力IDを持つ。敵生成時は定義値をそのまま使用し、難易度・Wave倍率は適用しない。
+各定義は英語名（`nameEn`）、日本語名（`nameJa`）、分類（`category`）、HP（`hp`）、速度（`speed`）、攻撃力（`damage`）、装甲率（`armor`）、罠耐性（`trapResistance`）、能力配列（`abilities`）を持つ。敵生成時は定義値をそのまま使用し、難易度・Wave倍率は出現数に適用する。
 
 初期値は次のとおり。
 
-| ID | HP | 速度 | 攻撃力 | 装甲 | 罠耐性 | 能力 |
-|---|---:|---:|---:|---:|---:|---|
-| `peasant` | 20 | 1.2 | 4 | 0 | 0 | なし |
-| `adventurer` | 35 | 1.2 | 6 | 0 | 0 | なし |
-| `warrior` | 60 | 1.2 | 9 | 0.10 | 0.10 | なし |
-| `thief` | 30 | 2.7 | 5 | 0 | 0 | なし |
-| `horseman` | 70 | 3.0 | 11 | 0.15 | 0.25 | なし |
-| `knight` | 120 | 0.75 | 15 | 0.30 | 0.35 | なし |
-| `brute` | 240 | 0.55 | 24 | 0.35 | 0.50 | なし |
-| `priest` | 40 | 1.2 | 5 | 0 | 0 | `heal_aura` |
-| `drummer` | 65 | 1.2 | 7 | 0 | 0 | `speed_aura`, `attack_aura` |
-| `shieldmaster` | 130 | 0.75 | 14 | 0.20 | 0.35 | `front_shield` |
-| `wizard_speed` | 40 | 1.2 | 4 | 0 | 0 | `wizard_speed` |
-| `wizard_attack` | 40 | 1.2 | 4 | 0 | 0 | `wizard_attack` |
-| `wizard_heal` | 40 | 1.2 | 4 | 0 | 0 | `wizard_heal` |
+| ID | 英語名 | 日本語名 | 分類 | HP | 速度 | 攻撃力 | 装甲 | 罠耐性 | 能力 |
+|---|---|---|---|---:|---:|---:|---:|---:|---|
+| `archer` | Archer | アーチャー | infantry | 30 | 1.2 | 8 | 0 | 0 | なし |
+| `armored_axeman` | Armored Axeman | 重装斧兵 | heavy | 100 | 0.8 | 15 | 0.40 | 0.30 | なし |
+| `armored_orc` | Armored Orc | 重装オーク | heavy | 90 | 0.9 | 12 | 0.30 | 0.30 | なし |
+| `armored_skeleton` | Armored Skeleton | 重装スケルトン | heavy | 80 | 0.9 | 10 | 0.30 | 0.20 | なし |
+| `bat` | Bat | コウモリ | fast | 15 | 2.0 | 3 | 0 | 0 | なし |
+| `elite_orc` | Elite Orc | エリートオーク | heavy | 150 | 1.0 | 18 | 0.20 | 0.40 | なし |
+| `greatsword_skeleton` | Greatsword Skeleton | 大剣スケルトン | heavy | 160 | 0.7 | 25 | 0.20 | 0.40 | なし |
+| `knight` | Knight | 騎士 | heavy | 120 | 0.75 | 15 | 0.30 | 0.35 | なし |
+| `knight_templar` | Knight Templar | テンプル騎士 | heavy | 250 | 0.7 | 20 | 0.50 | 0.50 | `front_shield` |
+| `lancer` | Lancer | ランサー | melee | 50 | 1.4 | 9 | 0.10 | 0.10 | なし |
+| `necromancer` | Necromancer | ネクロマンサー | wizard | 50 | 1.0 | 10 | 0 | 0 | `wizard_speed` |
+| `orc` | Orc | オーク | infantry | 40 | 1.1 | 6 | 0.10 | 0.10 | なし |
+| `orc_rider` | Orc rider | オークライダー | fast | 70 | 2.5 | 12 | 0.20 | 0.20 | なし |
+| `priest` | Priest | 僧侶 | support | 40 | 1.2 | 5 | 0 | 0 | `heal_aura` |
+| `skeleton` | Skeleton | スケルトン | infantry | 25 | 1.0 | 4 | 0 | 0 | なし |
+| `skeleton_archer` | Skeleton Archer | スケルトンアーチャー | infantry | 20 | 1.0 | 6 | 0 | 0 | なし |
+| `slime` | Slime | スライム | infantry | 25 | 0.8 | 5 | 0 | 0.20 | なし |
+| `soldier` | Soldier | 兵士 | infantry | 35 | 1.2 | 5 | 0.10 | 0 | なし |
+| `swordsman` | Swordsman | 剣士 | melee | 45 | 1.3 | 7 | 0.10 | 0 | なし |
+| `werebear` | Werebear | ウェアベア | heavy | 240 | 0.6 | 25 | 0.30 | 0.50 | なし |
+| `werewolf` | Werewolf | ウェアウルフ | fast | 140 | 2.2 | 18 | 0.10 | 0.10 | なし |
+| `wizard` | Wizard | 魔法使い | wizard | 40 | 1.1 | 8 | 0 | 0 | `wizard_attack` |
 
-敵能力設定の初期値は、Priest回復量5・間隔120・射程3、Drummerオーラ射程4・速度/攻撃倍率+20%、Wizardオーラ射程4・速度/攻撃倍率+25%、Wizard回復量4・間隔90、Shieldmaster前方軽減80%・角度120度である。距離の射程はタイル単位、回復間隔は更新フレーム単位。
+敵能力設定の初期値は、Priest回復量5・間隔120・射程3、Drummerオーラ射程4・速度/攻撃倍率+20%、Wizardオーラ射程4・速度/攻撃倍率+25%、Wizard回復量4・間隔90、Knight Templar/Shieldmaster前方軽減80%・角度120度である。距離の射程はタイル単位、回復間隔は更新フレーム単位。
 
 - 最寄りの畑を目標にする。
 - 畑から24×0.8px以内では移動せず、毎フレーム `damage/60` を与える。
 - `armor` は通常被ダメージを最大95%まで軽減。
 - `trapResistance` は罠効果量と持続時間を割合軽減。
-- Priest/Wizardは範囲内の味方を一定間隔で回復する。
-- DrummerとWizardは範囲内の他の敵へ速度または攻撃力バフを付与し、同種効果は最大値を採用する。
-- Shieldmasterは移動方向前方の角度120度以内からのダメージを最大80%軽減する。
+- Priest/Necromancer/Wizardは範囲内の味方支援や攻撃能力を持つ。
+- Knight Templarは移動方向前方の角度120度以内からのダメージを最大80%軽減する。
 
 ### 5.5 弾とエフェクト
 
 弾速は5px/更新。マシンガンは単体、ミサイルは着弾点周囲の全敵へダメージを与える。弾は飛行方向の角度で描画し、弾スプライトはマシンガン弾の `bulletMG` とミサイル弾の `bulletMissile` を別々に設定できる。未設定時は弾丸専用スプライトを描画せず、呼び出し側の図形描画へフォールバックする。建物用の `mg` / `missile` や旧 `bullet` 設定を弾丸へ流用しない。`TextEffect` は獲得・ダメージ表示、`SpriteEffect` は播種・散水・収穫・発掘・罠効果表示、`Explosion` はミサイル爆発表示に使用する。
 
-敵には描画専用の `facing` と `spriteState`（`idle` / `hit` / `death`）を持たせる。移動量から上下左右の向きを更新し、被弾時は16フレーム、死亡時は64フレームの状態アニメーションを表示する。死亡判定はHPが0になった時点で成立するが、敵オブジェクトは死亡アニメーション終了まで配列に残るため、Waveクリア判定と描画上の消滅は遅延する。死亡済みの敵は通常更新・罠効果・追加ダメージの対象外とする。
+敵には描画用の `spriteState`（`walk` / `attack` / `hurt` / `death` / `idle`）を持たせる。エネミーのスプライトシートは1エネミーにつき6種類のモーションファイル（`_Attack01.png`, `_Attack02.png`, `_Death.png`, `_Hurt.png`, `_Idle.png`, `_Walk.png`）を個別に割り当てる（`with shadows` 版を除く）。
 
-敵スプライトの標準状態シートは4列×12行で、各方向4フレームを使用する。行は `idle`（0〜3行）、`hit`（4〜7行）、`death`（8〜11行）、方向順は下・左・右・上である。敵の描画サイズは標準設定の2倍とし、`alignVisibleFrames` が有効なシートでは透明でない画素の外接範囲からフレームごとの基準点を補正する。
+- 全てのモーションシートは1セル100×100pxとし、画像幅から横方向のコマ数を自動判別して分割表示する。
+- 敵の上下左右の向き指定（行切り替え）は削除し、移動中は `_Walk.png`（非移動時等は `_Idle.png`）を使用し、移動方向（`moveX < 0`）により左右反転（flip）を行う。
+- 畑の攻撃時は `Attack01` と `Attack02` を交互に連続再生する。
+- `Hurt` モーションは状態異常（毒、やけど、スロー、スタン等のドット/デバフ効果）以外の直接被ダメージ時に適用される。
+- 死亡時は `_Death.png` アニメーションを再生する。死亡判定はHPが0になった時点で成立するが、描画上の消滅まで敵オブジェクトは保持される。
 
 ## 6. 罠システム
 

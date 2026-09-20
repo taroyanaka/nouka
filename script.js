@@ -75,23 +75,31 @@ const EXCAVATION_DRONE_CONFIG={baseSpeed:1,dropIntervalMin:180,dropIntervalMax:4
 // Enemy definitions are data-driven so names, stats, abilities, and wave counts
 // can be edited without adding a new enemy class.
 const ENEMY_DEFINITIONS={
- peasant:{nameEn:'Peasant',nameJa:'農民',category:'infantry',hp:20,speed:1.2,damage:4,armor:0,trapResistance:0,abilities:[]},
- adventurer:{nameEn:'Adventurer',nameJa:'冒険者',category:'infantry',hp:35,speed:1.2,damage:6,armor:0,trapResistance:0,abilities:[]},
- warrior:{nameEn:'Warrior',nameJa:'戦士',category:'melee',hp:60,speed:1.2,damage:9,armor:.1,trapResistance:.1,abilities:[]},
- thief:{nameEn:'Thief',nameJa:'シーフ',category:'fast',hp:30,speed:2.7,damage:5,armor:0,trapResistance:0,abilities:[]},
- horseman:{nameEn:'Horseman',nameJa:'騎兵',category:'fast',hp:70,speed:3,damage:11,armor:.15,trapResistance:.25,abilities:[]},
- knight:{nameEn:'Knight',nameJa:'騎士',category:'heavy',hp:120,speed:.75,damage:15,armor:.3,trapResistance:.35,abilities:[]},
- brute:{nameEn:'Brute',nameJa:'ブルート',category:'heavy',hp:240,speed:.55,damage:24,armor:.35,trapResistance:.5,abilities:[]},
- showcase_titan:{nameEn:'Showcase Titan',nameJa:'ショーケース用超高耐久兵',category:'showcase',hp:100000,speed:.85,damage:16,armor:.15,trapResistance:.15,abilities:[]},
+ archer:{nameEn:'Archer',nameJa:'アーチャー',category:'infantry',hp:30,speed:1.2,damage:8,armor:0,trapResistance:0,abilities:[]},
+ armored_axeman:{nameEn:'Armored Axeman',nameJa:'重装斧兵',category:'heavy',hp:100,speed:0.8,damage:15,armor:0.4,trapResistance:0.3,abilities:[]},
+ armored_orc:{nameEn:'Armored Orc',nameJa:'重装オーク',category:'heavy',hp:90,speed:0.9,damage:12,armor:0.3,trapResistance:0.3,abilities:[]},
+ armored_skeleton:{nameEn:'Armored Skeleton',nameJa:'重装スケルトン',category:'heavy',hp:80,speed:0.9,damage:10,armor:0.3,trapResistance:0.2,abilities:[]},
+ bat:{nameEn:'Bat',nameJa:'コウモリ',category:'fast',hp:15,speed:2.0,damage:3,armor:0,trapResistance:0,abilities:[]},
+ elite_orc:{nameEn:'Elite Orc',nameJa:'エリートオーク',category:'heavy',hp:150,speed:1.0,damage:18,armor:0.2,trapResistance:0.4,abilities:[]},
+ greatsword_skeleton:{nameEn:'Greatsword Skeleton',nameJa:'大剣スケルトン',category:'heavy',hp:160,speed:0.7,damage:25,armor:0.2,trapResistance:0.4,abilities:[]},
+ knight:{nameEn:'Knight',nameJa:'騎士',category:'heavy',hp:120,speed:0.75,damage:15,armor:0.3,trapResistance:0.35,abilities:[]},
+ knight_templar:{nameEn:'Knight Templar',nameJa:'テンプル騎士',category:'heavy',hp:250,speed:0.7,damage:20,armor:0.5,trapResistance:0.5,abilities:['front_shield']},
+ lancer:{nameEn:'Lancer',nameJa:'ランサー',category:'melee',hp:50,speed:1.4,damage:9,armor:0.1,trapResistance:0.1,abilities:[]},
+ necromancer:{nameEn:'Necromancer',nameJa:'ネクロマンサー',category:'wizard',hp:50,speed:1.0,damage:10,armor:0,trapResistance:0,abilities:['wizard_speed']},
+ orc:{nameEn:'Orc',nameJa:'オーク',category:'infantry',hp:40,speed:1.1,damage:6,armor:0.1,trapResistance:0.1,abilities:[]},
+ orc_rider:{nameEn:'Orc rider',nameJa:'オークライダー',category:'fast',hp:70,speed:2.5,damage:12,armor:0.2,trapResistance:0.2,abilities:[]},
  priest:{nameEn:'Priest',nameJa:'僧侶',category:'support',hp:40,speed:1.2,damage:5,armor:0,trapResistance:0,abilities:['heal_aura']},
- drummer:{nameEn:'Drummer',nameJa:'ドラマー',category:'support',hp:65,speed:1.2,damage:7,armor:0,trapResistance:0,abilities:['speed_aura','attack_aura']},
- shieldmaster:{nameEn:'Shieldmaster',nameJa:'シールドマスター',category:'shield',hp:130,speed:.75,damage:14,armor:.2,trapResistance:.35,abilities:['front_shield']},
- wizard_speed:{nameEn:'Wizard',nameJa:'魔法使い（移動速度）',category:'wizard',hp:40,speed:1.2,damage:4,armor:0,trapResistance:0,abilities:['wizard_speed']},
- wizard_attack:{nameEn:'Wizard',nameJa:'魔法使い（攻撃速度）',category:'wizard',hp:40,speed:1.2,damage:4,armor:0,trapResistance:0,abilities:['wizard_attack']},
- wizard_heal:{nameEn:'Wizard',nameJa:'魔法使い（回復）',category:'wizard',hp:40,speed:1.2,damage:4,armor:0,trapResistance:0,abilities:['wizard_heal']}
+ skeleton:{nameEn:'Skeleton',nameJa:'スケルトン',category:'infantry',hp:25,speed:1.0,damage:4,armor:0,trapResistance:0,abilities:[]},
+ skeleton_archer:{nameEn:'Skeleton Archer',nameJa:'スケルトンアーチャー',category:'infantry',hp:20,speed:1.0,damage:6,armor:0,trapResistance:0,abilities:[]},
+ slime:{nameEn:'Slime',nameJa:'スライム',category:'infantry',hp:25,speed:0.8,damage:5,armor:0,trapResistance:0.2,abilities:[]},
+ soldier:{nameEn:'Soldier',nameJa:'兵士',category:'infantry',hp:35,speed:1.2,damage:5,armor:0.1,trapResistance:0,abilities:[]},
+ swordsman:{nameEn:'Swordsman',nameJa:'剣士',category:'melee',hp:45,speed:1.3,damage:7,armor:0.1,trapResistance:0,abilities:[]},
+ werebear:{nameEn:'Werebear',nameJa:'ウェアベア',category:'heavy',hp:240,speed:0.6,damage:25,armor:0.3,trapResistance:0.5,abilities:[]},
+ werewolf:{nameEn:'Werewolf',nameJa:'ウェアウルフ',category:'fast',hp:140,speed:2.2,damage:18,armor:0.1,trapResistance:0.1,abilities:[]},
+ wizard:{nameEn:'Wizard',nameJa:'魔法使い',category:'wizard',hp:40,speed:1.1,damage:8,armor:0,trapResistance:0,abilities:['wizard_attack']}
 };
 const ENEMY_ABILITY_CONFIG={priestHealAmount:5,priestHealInterval:120,priestHealRange:3,drummerAuraRange:4,drummerSpeedRate:.2,drummerAttackRate:.2,wizardAuraRange:4,wizardHealAmount:4,wizardHealInterval:90,wizardSpeedRate:.25,wizardAttackRate:.25,shieldmasterFrontReduction:.8,shieldmasterFrontAngle:120};
-const regulationWaveDefaults=()=>Object.fromEntries(Array.from({length:CONFIG.maxWave},(_,i)=>[i+1,{peasant:10,adventurer:5}]));
+const regulationWaveDefaults=()=>Object.fromEntries(Array.from({length:CONFIG.maxWave},(_,i)=>[i+1,{bat:10,slime:5}]));
 const defaultDifficulties=()=>Object.fromEntries(Array.from({length:5},(_,i)=>[i+1,{initialMoney:CONFIG.initialMoney,waves:regulationWaveDefaults()}]));
 let REGULATIONS=[{id:'standard',name:'標準設定',difficulties:defaultDifficulties(),techTrees:structuredClone(DEFAULT_TECH_TREES)}];
 let activeRegulationId='standard';
@@ -147,19 +155,219 @@ const SPRITE_SHEET_12X12=(uri,overrides={})=>({...SPRITE_DEFAULT,uri,frames:144,
 const SPRITE_SHEET_12X6=(uri,overrides={})=>({...SPRITE_DEFAULT,uri,frames:72,columns:12,rows:6,frameDuration:6,...overrides});
 const SPRITE_SHEET_6X6=(uri,overrides={})=>({...SPRITE_DEFAULT,uri,frames:36,columns:6,rows:6,frameDuration:6,...overrides});
 const SPRITE_CONFIG={
- outside:{...SPRITE_DEFAULT},floor:{...SPRITE_DEFAULT},blocked:SPRITE_SHEET_4X4('sprite_sheets/blocked.png'),slow:SPRITE_SHEET_4X4('sprite_sheets/slow.png'),spawn:{...SPRITE_DEFAULT},base:{...SPRITE_DEFAULT},excavation:{...SPRITE_DEFAULT},
- farm:SPRITE_SHEET_12X12('sprite_sheets/farm.png'),lab:SPRITE_SHEET_12X12('sprite_sheets/lab.png'),mg:SPRITE_SHEET_12X12('sprite_sheets/mg.png'),missile:SPRITE_SHEET_12X12('sprite_sheets/missile.png'),
- trap:SPRITE_SHEET_4X4('sprite_sheets/trap.png'),
- enemy:SPRITE_SHEET_4X4('sprite_sheets/enemy.png',{frames:48,columns:4,rows:12,alignVisibleFrames:true}),
- enemy_peasant:{...SPRITE_DEFAULT},enemy_adventurer:{...SPRITE_DEFAULT},enemy_warrior:{...SPRITE_DEFAULT},enemy_thief:{...SPRITE_DEFAULT},enemy_horseman:{...SPRITE_DEFAULT},enemy_knight:{...SPRITE_DEFAULT},enemy_brute:{...SPRITE_DEFAULT},enemy_showcase_titan:{...SPRITE_DEFAULT},enemy_priest:{...SPRITE_DEFAULT},enemy_drummer:{...SPRITE_DEFAULT},enemy_shieldmaster:{...SPRITE_DEFAULT},enemy_wizard_speed:{...SPRITE_DEFAULT},enemy_wizard_attack:{...SPRITE_DEFAULT},enemy_wizard_heal:{...SPRITE_DEFAULT},
- drone:SPRITE_SHEET_4X4('sprite_sheets/drone.png'),droneSow:SPRITE_SHEET_4X4('sprite_sheets/droneSow.png'),droneWater:SPRITE_SHEET_4X4('sprite_sheets/droneWater.png'),droneHarvest:SPRITE_SHEET_4X4('sprite_sheets/droneHarvest.png'),droneExcavation:SPRITE_SHEET_4X4('sprite_sheets/droneExcavation.png'),
- bullet:{...SPRITE_DEFAULT},bulletMG:{...SPRITE_DEFAULT},bulletMissile:{...SPRITE_DEFAULT},explosion:SPRITE_SHEET_4X4('sprite_sheets/explosion.png'),trapEffect:{...SPRITE_DEFAULT},sowEffect:{...SPRITE_DEFAULT},waterEffect:{...SPRITE_DEFAULT},harvestEffect:{...SPRITE_DEFAULT},excavationEffect:{...SPRITE_DEFAULT}
-};
- const ENEMY_SPRITE_LAYOUT=Object.freeze({columns:4,framesPerDirection:4,stateRows:Object.freeze({idle:0,hit:4,death:8}),directionRows:Object.freeze({down:0,left:1,right:2,up:3}),frameDuration:16,hitDuration:16,deathDuration:64,displayScale:2});
+ outside:{...SPRITE_DEFAULT},floor:{...SPRITE_DEFAULT},blocked:SPRITE_SHEET_4X4('sprite_sheets/blocked.png'),slow:SPRITE_SHEET_4X4('sprite_sheets/slow.png'),spawn:{...SPRITE_DEFAULT},base:{...SPRITE_DEFAULT},excavation:{...SPRITE_DEFAULT}, farm:SPRITE_SHEET_12X12('sprite_sheets/farm.png'),lab:SPRITE_SHEET_12X12('sprite_sheets/lab.png'),mg:SPRITE_SHEET_12X12('sprite_sheets/mg.png'),missile:SPRITE_SHEET_12X12('sprite_sheets/missile.png'), trap:SPRITE_SHEET_4X4('sprite_sheets/trap.png'), enemy:SPRITE_SHEET_4X4('sprite_sheets/enemy.png',{frames:12,columns:3,rows:4,frameDuration:6,alignVisibleFrames:true}), 
+  enemy_archer:SPRITE_SHEET_4X4('sprite_sheets/Tiny RPG Character Asset Pack 01 v2.0 -Full 22 Characters/char/Archer/Archer/Archer.png',{frames:12,columns:3,rows:4,frameDuration:6,alignVisibleFrames:true}),
+  enemy_armored_axeman:SPRITE_SHEET_4X4('sprite_sheets/Tiny RPG Character Asset Pack 01 v2.0 -Full 22 Characters/char/Armored Axeman/Armored Axeman/Armored Axeman.png',{frames:12,columns:3,rows:4,frameDuration:6,alignVisibleFrames:true}),
+  enemy_armored_orc:SPRITE_SHEET_4X4('sprite_sheets/Tiny RPG Character Asset Pack 01 v2.0 -Full 22 Characters/char/Armored Orc/Armored Orc/Armored Orc.png',{frames:12,columns:3,rows:4,frameDuration:6,alignVisibleFrames:true}),
+  enemy_armored_skeleton:SPRITE_SHEET_4X4('sprite_sheets/Tiny RPG Character Asset Pack 01 v2.0 -Full 22 Characters/char/Armored Skeleton/Armored Skeleton/Armored Skeleton.png',{frames:12,columns:3,rows:4,frameDuration:6,alignVisibleFrames:true}),
+  enemy_bat:SPRITE_SHEET_4X4('sprite_sheets/Tiny RPG Character Asset Pack 01 v2.0 -Full 22 Characters/char/Bat/Bat/Bat.png',{frames:12,columns:3,rows:4,frameDuration:6,alignVisibleFrames:true}),
+  enemy_elite_orc:SPRITE_SHEET_4X4('sprite_sheets/Tiny RPG Character Asset Pack 01 v2.0 -Full 22 Characters/char/Elite Orc/Elite Orc/Elite Orc.png',{frames:12,columns:3,rows:4,frameDuration:6,alignVisibleFrames:true}),
+  enemy_greatsword_skeleton:SPRITE_SHEET_4X4('sprite_sheets/Tiny RPG Character Asset Pack 01 v2.0 -Full 22 Characters/char/Greatsword Skeleton/Greatsword Skeleton/Greatsword Skeleton.png',{frames:12,columns:3,rows:4,frameDuration:6,alignVisibleFrames:true}),
+  enemy_knight:SPRITE_SHEET_4X4('sprite_sheets/Tiny RPG Character Asset Pack 01 v2.0 -Full 22 Characters/char/Knight/Knight/Knight.png',{frames:12,columns:3,rows:4,frameDuration:6,alignVisibleFrames:true}),
+  enemy_knight_templar:SPRITE_SHEET_4X4('sprite_sheets/Tiny RPG Character Asset Pack 01 v2.0 -Full 22 Characters/char/Knight Templar/Knight Templar/Knight Templar.png',{frames:12,columns:3,rows:4,frameDuration:6,alignVisibleFrames:true}),
+  enemy_lancer:SPRITE_SHEET_4X4('sprite_sheets/Tiny RPG Character Asset Pack 01 v2.0 -Full 22 Characters/char/Lancer/Lancer/Lancer.png',{frames:12,columns:3,rows:4,frameDuration:6,alignVisibleFrames:true}),
+  enemy_necromancer:SPRITE_SHEET_4X4('sprite_sheets/Tiny RPG Character Asset Pack 01 v2.0 -Full 22 Characters/char/Necromancer/Necromancer/Necromancer.png',{frames:12,columns:3,rows:4,frameDuration:6,alignVisibleFrames:true}),
+  enemy_orc:SPRITE_SHEET_4X4('sprite_sheets/Tiny RPG Character Asset Pack 01 v2.0 -Full 22 Characters/char/Orc/Orc/Orc.png',{frames:12,columns:3,rows:4,frameDuration:6,alignVisibleFrames:true}),
+  enemy_orc_rider:SPRITE_SHEET_4X4('sprite_sheets/Tiny RPG Character Asset Pack 01 v2.0 -Full 22 Characters/char/Orc rider/Orc rider/Orc rider.png',{frames:12,columns:3,rows:4,frameDuration:6,alignVisibleFrames:true}),
+  enemy_priest:SPRITE_SHEET_4X4('sprite_sheets/Tiny RPG Character Asset Pack 01 v2.0 -Full 22 Characters/char/Priest/Priest/Priest.png',{frames:12,columns:3,rows:4,frameDuration:6,alignVisibleFrames:true}),
+  enemy_skeleton:SPRITE_SHEET_4X4('sprite_sheets/Tiny RPG Character Asset Pack 01 v2.0 -Full 22 Characters/char/Skeleton/Skeleton/Skeleton.png',{frames:12,columns:3,rows:4,frameDuration:6,alignVisibleFrames:true}),
+  enemy_skeleton_archer:SPRITE_SHEET_4X4('sprite_sheets/Tiny RPG Character Asset Pack 01 v2.0 -Full 22 Characters/char/Skeleton Archer/Skeleton Archer/Skeleton Archer.png',{frames:12,columns:3,rows:4,frameDuration:6,alignVisibleFrames:true}),
+  enemy_slime:SPRITE_SHEET_4X4('sprite_sheets/Tiny RPG Character Asset Pack 01 v2.0 -Full 22 Characters/char/Slime/Slime/Slime.png',{frames:12,columns:3,rows:4,frameDuration:6,alignVisibleFrames:true}),
+  enemy_soldier:SPRITE_SHEET_4X4('sprite_sheets/Tiny RPG Character Asset Pack 01 v2.0 -Full 22 Characters/char/Soldier/Soldier/Soldier.png',{frames:12,columns:3,rows:4,frameDuration:6,alignVisibleFrames:true}),
+  enemy_swordsman:SPRITE_SHEET_4X4('sprite_sheets/Tiny RPG Character Asset Pack 01 v2.0 -Full 22 Characters/char/Swordsman/Swordsman/Swordsman.png',{frames:12,columns:3,rows:4,frameDuration:6,alignVisibleFrames:true}),
+  enemy_werebear:SPRITE_SHEET_4X4('sprite_sheets/Tiny RPG Character Asset Pack 01 v2.0 -Full 22 Characters/char/Werebear/Werebear/Werebear.png',{frames:12,columns:3,rows:4,frameDuration:6,alignVisibleFrames:true}),
+  enemy_werewolf:SPRITE_SHEET_4X4('sprite_sheets/Tiny RPG Character Asset Pack 01 v2.0 -Full 22 Characters/char/Werewolf/Werewolf/Werewolf.png',{frames:12,columns:3,rows:4,frameDuration:6,alignVisibleFrames:true}),
+  enemy_wizard:SPRITE_SHEET_4X4('sprite_sheets/Tiny RPG Character Asset Pack 01 v2.0 -Full 22 Characters/char/Wizard/Wizard/Wizard.png',{frames:12,columns:3,rows:4,frameDuration:6,alignVisibleFrames:true}),
+  drone:SPRITE_SHEET_4X4('sprite_sheets/drone.png'),droneSow:SPRITE_SHEET_4X4('sprite_sheets/droneSow.png'),droneWater:SPRITE_SHEET_4X4('sprite_sheets/droneWater.png'),droneHarvest:SPRITE_SHEET_4X4('sprite_sheets/droneHarvest.png'),droneExcavation:SPRITE_SHEET_4X4('sprite_sheets/droneExcavation.png'), bullet:{...SPRITE_DEFAULT},bulletMG:{...SPRITE_DEFAULT},bulletMissile:{...SPRITE_DEFAULT},explosion:SPRITE_SHEET_4X4('sprite_sheets/explosion.png'),trapEffect:{...SPRITE_DEFAULT},sowEffect:{...SPRITE_DEFAULT},waterEffect:{...SPRITE_DEFAULT},harvestEffect:{...SPRITE_DEFAULT},excavationEffect:{...SPRITE_DEFAULT} };
+  const ENEMY_SPRITE_LAYOUT=Object.freeze({columns:3,framesPerDirection:3,stateRows:Object.freeze({idle:0,hit:0,attack:0,death:3}),directionRows:Object.freeze({up:0,down:1,right:2,left:2}),frameDuration:6,hitDuration:18,deathDuration:18,displayScale:2});
 const SPRITE_IMAGES=new Map();
-function spriteDefinition(key,definition){return {...SPRITE_CONFIG[key]||SPRITE_DEFAULT,...(definition||{})}}
+
+const MOTION_SPRITE=(uri)=>({...SPRITE_DEFAULT,uri,sw:100,sh:100,width:tile*2,height:tile*2,pivotX:.5,pivotY:.5,frameDuration:6,alignVisibleFrames:true,split100:true,flipByDirection:true});
+const CHAR_BASE='sprite_sheets/Tiny RPG Character Asset Pack 01 v2.0 -Full 22 Characters/';
+const ENEMY_MOTIONS={
+  archer:{
+    attack01:MOTION_SPRITE(CHAR_BASE+'char/Archer/Archer/Archer_Attack01.png'),
+    attack02:MOTION_SPRITE(CHAR_BASE+'char/Archer/Archer/Archer_Attack02.png'),
+    death:MOTION_SPRITE(CHAR_BASE+'char/Archer/Archer/Archer_Death.png'),
+    hurt:MOTION_SPRITE(CHAR_BASE+'char/Archer/Archer/Archer_Hurt.png'),
+    idle:MOTION_SPRITE(CHAR_BASE+'char/Archer/Archer/Archer_Idle.png'),
+    walk:MOTION_SPRITE(CHAR_BASE+'char/Archer/Archer/Archer_Walk.png')
+  },
+  armored_axeman:{
+    attack01:MOTION_SPRITE(CHAR_BASE+'char/Armored Axeman/Armored Axeman/Armored Axeman_Attack01.png'),
+    attack02:MOTION_SPRITE(CHAR_BASE+'char/Armored Axeman/Armored Axeman/Armored Axeman_Attack02.png'),
+    death:MOTION_SPRITE(CHAR_BASE+'char/Armored Axeman/Armored Axeman/Armored Axeman_Death.png'),
+    hurt:MOTION_SPRITE(CHAR_BASE+'char/Armored Axeman/Armored Axeman/Armored Axeman_Hurt.png'),
+    idle:MOTION_SPRITE(CHAR_BASE+'char/Armored Axeman/Armored Axeman/Armored Axeman_Idle.png'),
+    walk:MOTION_SPRITE(CHAR_BASE+'char/Armored Axeman/Armored Axeman/Armored Axeman_Walk.png')
+  },
+  armored_orc:{
+    attack01:MOTION_SPRITE(CHAR_BASE+'char/Armored Orc/Armored Orc/Armored Orc_Attack01.png'),
+    attack02:MOTION_SPRITE(CHAR_BASE+'char/Armored Orc/Armored Orc/Armored Orc_Attack02.png'),
+    death:MOTION_SPRITE(CHAR_BASE+'char/Armored Orc/Armored Orc/Armored Orc_Death.png'),
+    hurt:MOTION_SPRITE(CHAR_BASE+'char/Armored Orc/Armored Orc/Armored Orc_Hurt.png'),
+    idle:MOTION_SPRITE(CHAR_BASE+'char/Armored Orc/Armored Orc/Armored Orc_Idle.png'),
+    walk:MOTION_SPRITE(CHAR_BASE+'char/Armored Orc/Armored Orc/Armored Orc_Walk.png')
+  },
+  armored_skeleton:{
+    attack01:MOTION_SPRITE(CHAR_BASE+'char/Armored Skeleton/Armored Skeleton/Armored Skeleton_Attack01.png'),
+    attack02:MOTION_SPRITE(CHAR_BASE+'char/Armored Skeleton/Armored Skeleton/Armored Skeleton_Attack02.png'),
+    death:MOTION_SPRITE(CHAR_BASE+'char/Armored Skeleton/Armored Skeleton/Armored Skeleton_Death.png'),
+    hurt:MOTION_SPRITE(CHAR_BASE+'char/Armored Skeleton/Armored Skeleton/Armored Skeleton_Hurt.png'),
+    idle:MOTION_SPRITE(CHAR_BASE+'char/Armored Skeleton/Armored Skeleton/Armored Skeleton_Idle.png'),
+    walk:MOTION_SPRITE(CHAR_BASE+'char/Armored Skeleton/Armored Skeleton/Armored Skeleton_Walk.png')
+  },
+  bat:{
+    attack01:MOTION_SPRITE(CHAR_BASE+'char/Bat/Bat/Bat_Attack01.png'),
+    attack02:MOTION_SPRITE(CHAR_BASE+'char/Bat/Bat/Bat_Attack02.png'),
+    death:MOTION_SPRITE(CHAR_BASE+'char/Bat/Bat/Bat_Death.png'),
+    hurt:MOTION_SPRITE(CHAR_BASE+'char/Bat/Bat/Bat_Hurt.png')
+  },
+  elite_orc:{
+    attack01:MOTION_SPRITE(CHAR_BASE+'char/Elite Orc/Elite Orc/Elite Orc_Attack01.png'),
+    attack02:MOTION_SPRITE(CHAR_BASE+'char/Elite Orc/Elite Orc/Elite Orc_Attack02.png'),
+    death:MOTION_SPRITE(CHAR_BASE+'char/Elite Orc/Elite Orc/Elite Orc_Death.png'),
+    hurt:MOTION_SPRITE(CHAR_BASE+'char/Elite Orc/Elite Orc/Elite Orc_Hurt.png'),
+    idle:MOTION_SPRITE(CHAR_BASE+'char/Elite Orc/Elite Orc/Elite Orc_Idle.png'),
+    walk:MOTION_SPRITE(CHAR_BASE+'char/Elite Orc/Elite Orc/Elite Orc_Walk.png')
+  },
+  greatsword_skeleton:{
+    attack01:MOTION_SPRITE(CHAR_BASE+'char/Greatsword Skeleton/Greatsword Skeleton/Greatsword Skeleton_Attack01.png'),
+    attack02:MOTION_SPRITE(CHAR_BASE+'char/Greatsword Skeleton/Greatsword Skeleton/Greatsword Skeleton_Attack02.png'),
+    death:MOTION_SPRITE(CHAR_BASE+'char/Greatsword Skeleton/Greatsword Skeleton/Greatsword Skeleton_Death.png'),
+    hurt:MOTION_SPRITE(CHAR_BASE+'char/Greatsword Skeleton/Greatsword Skeleton/Greatsword Skeleton_Hurt.png'),
+    idle:MOTION_SPRITE(CHAR_BASE+'char/Greatsword Skeleton/Greatsword Skeleton/Greatsword Skeleton_Idle.png'),
+    walk:MOTION_SPRITE(CHAR_BASE+'char/Greatsword Skeleton/Greatsword Skeleton/Greatsword Skeleton_Walk.png')
+  },
+  knight:{
+    attack01:MOTION_SPRITE(CHAR_BASE+'char/Knight/Knight/Knight_Attack01.png'),
+    attack02:MOTION_SPRITE(CHAR_BASE+'char/Knight/Knight/Knight_Attack02.png'),
+    death:MOTION_SPRITE(CHAR_BASE+'char/Knight/Knight/Knight_Death.png'),
+    hurt:MOTION_SPRITE(CHAR_BASE+'char/Knight/Knight/Knight_Hurt.png'),
+    idle:MOTION_SPRITE(CHAR_BASE+'char/Knight/Knight/Knight_Idle.png'),
+    walk:MOTION_SPRITE(CHAR_BASE+'char/Knight/Knight/Knight_Walk.png')
+  },
+  knight_templar:{
+    attack01:MOTION_SPRITE(CHAR_BASE+'char/Knight Templar/Knight Templar/Knight Templar_Attack01.png'),
+    attack02:MOTION_SPRITE(CHAR_BASE+'char/Knight Templar/Knight Templar/Knight Templar_Attack02.png'),
+    death:MOTION_SPRITE(CHAR_BASE+'char/Knight Templar/Knight Templar/Knight Templar_Death.png'),
+    hurt:MOTION_SPRITE(CHAR_BASE+'char/Knight Templar/Knight Templar/Knight Templar_Hurt.png'),
+    idle:MOTION_SPRITE(CHAR_BASE+'char/Knight Templar/Knight Templar/Knight Templar_Idle.png')
+  },
+  lancer:{
+    attack01:MOTION_SPRITE(CHAR_BASE+'char/Lancer/Lancer/Lancer_Attack01.png'),
+    attack02:MOTION_SPRITE(CHAR_BASE+'char/Lancer/Lancer/Lancer_Attack02.png'),
+    death:MOTION_SPRITE(CHAR_BASE+'char/Lancer/Lancer/Lancer_Death.png'),
+    hurt:MOTION_SPRITE(CHAR_BASE+'char/Lancer/Lancer/Lancer_Hurt.png'),
+    idle:MOTION_SPRITE(CHAR_BASE+'char/Lancer/Lancer/Lancer_Idle.png')
+  },
+  necromancer:{
+    attack01:MOTION_SPRITE(CHAR_BASE+'char/Necromancer/Necromancer/Necromancer_Attack01.png'),
+    attack02:MOTION_SPRITE(CHAR_BASE+'char/Necromancer/Necromancer/Necromancer_Attack02.png'),
+    hurt:MOTION_SPRITE(CHAR_BASE+'char/Necromancer/Necromancer/Necromancer_Hurt.png'),
+    idle:MOTION_SPRITE(CHAR_BASE+'char/Necromancer/Necromancer/Necromancer_Idle.png'),
+    walk:MOTION_SPRITE(CHAR_BASE+'char/Necromancer/Necromancer/Necromancer_Walk.png')
+  },
+  orc:{
+    attack01:MOTION_SPRITE(CHAR_BASE+'char/Orc/Orc/Orc_Attack01.png'),
+    attack02:MOTION_SPRITE(CHAR_BASE+'char/Orc/Orc/Orc_Attack02.png'),
+    death:MOTION_SPRITE(CHAR_BASE+'char/Orc/Orc/Orc_Death.png'),
+    hurt:MOTION_SPRITE(CHAR_BASE+'char/Orc/Orc/Orc_Hurt.png'),
+    idle:MOTION_SPRITE(CHAR_BASE+'char/Orc/Orc/Orc_Idle.png'),
+    walk:MOTION_SPRITE(CHAR_BASE+'char/Orc/Orc/Orc_Walk.png')
+  },
+  orc_rider:{
+    attack01:MOTION_SPRITE(CHAR_BASE+'char/Orc rider/Orc rider/Orc rider_Attack01.png'),
+    attack02:MOTION_SPRITE(CHAR_BASE+'char/Orc rider/Orc rider/Orc rider_Attack02.png'),
+    death:MOTION_SPRITE(CHAR_BASE+'char/Orc rider/Orc rider/Orc rider_Death.png'),
+    hurt:MOTION_SPRITE(CHAR_BASE+'char/Orc rider/Orc rider/Orc rider_Hurt.png'),
+    idle:MOTION_SPRITE(CHAR_BASE+'char/Orc rider/Orc rider/Orc rider_Idle.png'),
+    walk:MOTION_SPRITE(CHAR_BASE+'char/Orc rider/Orc rider/Orc rider_Walk.png')
+  },
+  priest:{
+    death:MOTION_SPRITE(CHAR_BASE+'char/Priest/Priest/Priest_Death.png'),
+    hurt:MOTION_SPRITE(CHAR_BASE+'char/Priest/Priest/Priest_Hurt.png'),
+    idle:MOTION_SPRITE(CHAR_BASE+'char/Priest/Priest/Priest_Idle.png'),
+    walk:MOTION_SPRITE(CHAR_BASE+'char/Priest/Priest/Priest_Walk.png')
+  },
+  skeleton:{
+    attack01:MOTION_SPRITE(CHAR_BASE+'char/Skeleton/Skeleton/Skeleton_Attack01.png'),
+    attack02:MOTION_SPRITE(CHAR_BASE+'char/Skeleton/Skeleton/Skeleton_Attack02.png'),
+    death:MOTION_SPRITE(CHAR_BASE+'char/Skeleton/Skeleton/Skeleton_Death.png'),
+    hurt:MOTION_SPRITE(CHAR_BASE+'char/Skeleton/Skeleton/Skeleton_Hurt.png'),
+    idle:MOTION_SPRITE(CHAR_BASE+'char/Skeleton/Skeleton/Skeleton_Idle.png'),
+    walk:MOTION_SPRITE(CHAR_BASE+'char/Skeleton/Skeleton/Skeleton_Walk.png')
+  },
+  skeleton_archer:{
+    death:MOTION_SPRITE(CHAR_BASE+'char/Skeleton Archer/Skeleton Archer/Skeleton Archer_Death.png'),
+    hurt:MOTION_SPRITE(CHAR_BASE+'char/Skeleton Archer/Skeleton Archer/Skeleton Archer_Hurt.png'),
+    idle:MOTION_SPRITE(CHAR_BASE+'char/Skeleton Archer/Skeleton Archer/Skeleton Archer_Idle.png'),
+    walk:MOTION_SPRITE(CHAR_BASE+'char/Skeleton Archer/Skeleton Archer/Skeleton Archer_Walk.png')
+  },
+  slime:{
+    attack01:MOTION_SPRITE(CHAR_BASE+'char/Slime/Slime/Slime_Attack01.png'),
+    attack02:MOTION_SPRITE(CHAR_BASE+'char/Slime/Slime/Slime_Attack02.png'),
+    death:MOTION_SPRITE(CHAR_BASE+'char/Slime/Slime/Slime_Death.png'),
+    hurt:MOTION_SPRITE(CHAR_BASE+'char/Slime/Slime/Slime_Hurt.png'),
+    idle:MOTION_SPRITE(CHAR_BASE+'char/Slime/Slime/Slime_Idle.png'),
+    walk:MOTION_SPRITE(CHAR_BASE+'char/Slime/Slime/Slime_Walk.png')
+  },
+  soldier:{
+    attack01:MOTION_SPRITE(CHAR_BASE+'char/Soldier/Soldier/Soldier_Attack01.png'),
+    attack02:MOTION_SPRITE(CHAR_BASE+'char/Soldier/Soldier/Soldier_Attack02.png'),
+    death:MOTION_SPRITE(CHAR_BASE+'char/Soldier/Soldier/Soldier_Death.png'),
+    hurt:MOTION_SPRITE(CHAR_BASE+'char/Soldier/Soldier/Soldier_Hurt.png'),
+    idle:MOTION_SPRITE(CHAR_BASE+'char/Soldier/Soldier/Soldier_Idle.png'),
+    walk:MOTION_SPRITE(CHAR_BASE+'char/Soldier/Soldier/Soldier_Walk.png')
+  },
+  swordsman:{
+    attack01:MOTION_SPRITE(CHAR_BASE+'char/Swordsman/Swordsman/Swordsman_Attack01.png'),
+    attack02:MOTION_SPRITE(CHAR_BASE+'char/Swordsman/Swordsman/Swordsman_Attack02.png'),
+    death:MOTION_SPRITE(CHAR_BASE+'char/Swordsman/Swordsman/Swordsman_Death.png'),
+    hurt:MOTION_SPRITE(CHAR_BASE+'char/Swordsman/Swordsman/Swordsman_Hurt.png'),
+    idle:MOTION_SPRITE(CHAR_BASE+'char/Swordsman/Swordsman/Swordsman_Idle.png'),
+    walk:MOTION_SPRITE(CHAR_BASE+'char/Swordsman/Swordsman/Swordsman_Walk.png')
+  },
+  werebear:{
+    attack01:MOTION_SPRITE(CHAR_BASE+'char/Werebear/Werebear/Werebear_Attack01.png'),
+    attack02:MOTION_SPRITE(CHAR_BASE+'char/Werebear/Werebear/Werebear_Attack02.png'),
+    death:MOTION_SPRITE(CHAR_BASE+'char/Werebear/Werebear/Werebear_Death.png'),
+    hurt:MOTION_SPRITE(CHAR_BASE+'char/Werebear/Werebear/Werebear_Hurt.png'),
+    idle:MOTION_SPRITE(CHAR_BASE+'char/Werebear/Werebear/Werebear_Idle.png'),
+    walk:MOTION_SPRITE(CHAR_BASE+'char/Werebear/Werebear/Werebear_Walk.png')
+  },
+  werewolf:{
+    attack01:MOTION_SPRITE(CHAR_BASE+'char/Werewolf/Werewolf/Werewolf_Attack01.png'),
+    attack02:MOTION_SPRITE(CHAR_BASE+'char/Werewolf/Werewolf/Werewolf_Attack02.png'),
+    death:MOTION_SPRITE(CHAR_BASE+'char/Werewolf/Werewolf/Werewolf_Death.png'),
+    hurt:MOTION_SPRITE(CHAR_BASE+'char/Werewolf/Werewolf/Werewolf_Hurt.png'),
+    idle:MOTION_SPRITE(CHAR_BASE+'char/Werewolf/Werewolf/Werewolf_Idle.png'),
+    walk:MOTION_SPRITE(CHAR_BASE+'char/Werewolf/Werewolf/Werewolf_Walk.png')
+  },
+  wizard:{
+    attack01:MOTION_SPRITE(CHAR_BASE+'char/Wizard/Wizard/Wizard_Attack01.png'),
+    attack02:MOTION_SPRITE(CHAR_BASE+'char/Wizard/Wizard/Wizard_Attack02.png'),
+    death:MOTION_SPRITE(CHAR_BASE+'char/Wizard/Wizard/Wizard_Death.png'),
+    hurt:MOTION_SPRITE(CHAR_BASE+'char/Wizard/Wizard/Wizard_Hurt.png'),
+    idle:MOTION_SPRITE(CHAR_BASE+'char/Wizard/Wizard/Wizard_Idle.png'),
+    walk:MOTION_SPRITE(CHAR_BASE+'char/Wizard/Wizard/Wizard_Walk.png')
+  }
+};
+
+function spriteDefinition(key,definition){return {...(key?SPRITE_CONFIG[key]:{}),...SPRITE_DEFAULT,...(definition||{})}}
 function loadSprite(uri){if(!uri)return null;if(SPRITE_IMAGES.has(uri))return SPRITE_IMAGES.get(uri);const image=new Image();const state={image,ready:false,failed:false,alignmentCache:new Map()};image.onload=()=>{state.ready=true;state.naturalWidth=Number(image.naturalWidth)||Number(image.width)||0;state.naturalHeight=Number(image.naturalHeight)||Number(image.height)||0};image.onerror=()=>{state.failed=true};image.src=uri;SPRITE_IMAGES.set(uri,state);return state}
-function spriteSourceGrid(definition,state,frameCount){const columns=Math.max(1,Math.floor(Number(definition.columns)||frameCount)),rows=Math.max(1,Math.floor(Number(definition.rows)||Math.ceil(frameCount/columns))),imageWidth=Number(state.naturalWidth)||Number(state.image?.naturalWidth)||Number(definition.sw)||24,imageHeight=Number(state.naturalHeight)||Number(state.image?.naturalHeight)||Number(definition.sh)||24;return {columns,rows,cellWidth:imageWidth/columns,cellHeight:imageHeight/rows}}
+function spriteSourceGrid(definition,state,frameCount){
+  let columns=Math.max(1,Math.floor(Number(definition.columns)||frameCount));
+  let rows=Math.max(1,Math.floor(Number(definition.rows)||Math.ceil(frameCount/columns)));
+  if(definition.split100||definition.sw===100){
+    const imgW=Number(state.naturalWidth)||Number(state.image?.naturalWidth)||100;
+    columns=Math.max(1,Math.floor(imgW/100));
+    rows=1;
+  }
+  const imageWidth=Number(state.naturalWidth)||Number(state.image?.naturalWidth)||Number(definition.sw)||24;
+  const imageHeight=Number(state.naturalHeight)||Number(state.image?.naturalHeight)||Number(definition.sh)||24;
+  return {columns,rows,cellWidth:imageWidth/columns,cellHeight:imageHeight/rows};
+}
 function spriteFrameAlignments(definition,state,frameCount,sourceGrid){if(!definition.alignVisibleFrames||typeof document==='undefined')return null;const cacheKey=`${sourceGrid.columns}x${sourceGrid.rows}:${sourceGrid.cellWidth}x${sourceGrid.cellHeight}:${Number(definition.sx||1)}:${Number(definition.sy||1)}:${frameCount}`;if(state.alignmentCache.has(cacheKey))return state.alignmentCache.get(cacheKey);const width=Math.max(1,Math.ceil(sourceGrid.cellWidth)),height=Math.max(1,Math.ceil(sourceGrid.cellHeight)),measureCanvas=document.createElement('canvas');measureCanvas.width=width;measureCanvas.height=height;const measureCtx=measureCanvas.getContext('2d',{willReadFrequently:true});if(!measureCtx){state.alignmentCache.set(cacheKey,null);return null}measureCtx.imageSmoothingEnabled=false;const alignments=[];try{for(let frame=0;frame<frameCount;frame++){measureCtx.clearRect(0,0,width,height);const sx=Math.max(0,Number(definition.sx||1)-1)+(frame%sourceGrid.columns)*sourceGrid.cellWidth,sy=Math.max(0,Number(definition.sy||1)-1)+Math.floor(frame/sourceGrid.columns)*sourceGrid.cellHeight;measureCtx.drawImage(state.image,sx,sy,sourceGrid.cellWidth,sourceGrid.cellHeight,0,0,width,height);const pixels=measureCtx.getImageData(0,0,width,height).data;let minX=width,minY=height,maxX=-1,maxY=-1;for(let y=0;y<height;y++)for(let x=0;x<width;x++)if(pixels[(y*width+x)*4+3]>8){if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y}alignments.push(maxX<0?null:{pivotX:(minX+maxX+1)/(width*2),pivotY:(minY+maxY+1)/(height*2)})}}catch(error){state.alignmentCache.set(cacheKey,null);return null}state.alignmentCache.set(cacheKey,alignments);return alignments}
 function drawSprite(key,x,y,options={}){const d=spriteDefinition(key,options.definition),state=loadSprite(d.uri);if(!state?.ready)return false;const frameCount=Math.max(1,Math.floor(Number(d.frames)||1)),requestedFrame=Number(options.frameIndex),frame=Number.isFinite(requestedFrame)?Math.max(0,Math.floor(requestedFrame))%frameCount:Math.max(0,Math.floor((TEST_RUNTIME.frame||0)/Math.max(1,Number(d.frameDuration)||1))%frameCount),sourceGrid=spriteSourceGrid(d,state,frameCount),frameAlignment=spriteFrameAlignments(d,state,frameCount,sourceGrid)?.[frame],sx=Math.max(0,Number(d.sx||1)-1)+(frame%sourceGrid.columns)*sourceGrid.cellWidth,sy=Math.max(0,Number(d.sy||1)-1)+Math.floor(frame/sourceGrid.columns)*sourceGrid.cellHeight,w=Number(d.width)||tile,h=Number(d.height)||tile,pivotX=frameAlignment?.pivotX??Number(d.pivotX??.5),pivotY=frameAlignment?.pivotY??Number(d.pivotY??.5);ctx.save();ctx.translate(x,y);if(Number.isFinite(Number(options.rotation)))ctx.rotate(Number(options.rotation));if(options.flip&&d.flipByDirection)ctx.scale(-1,1);ctx.drawImage(state.image,sx,sy,sourceGrid.cellWidth,sourceGrid.cellHeight,-w*pivotX,-h*pivotY,w,h);ctx.restore();return true}
 function cellSpriteDefinition(key,definition={}){return {...spriteDefinition(key,definition),width:tile,height:tile}}
@@ -167,68 +375,71 @@ function drawCellSprite(key,x,y,options={}){return drawSprite(key,x,y,{...option
 function drawCellFallback(type,gx,gy){ctx.fillStyle=colors[type]||'#798c96';ctx.fillRect(gx*tile,gy*tile,tile,tile)}
 function drawProjectileSprite(type,x,y,options={}){const key=type==='missile'?'bulletMissile':'bulletMG';const definition=SPRITE_CONFIG[key];if(!definition?.uri)return false;return drawSprite(key,x,y,{...options,definition})}
 function enemySpriteKey(type){return `enemy_${String(type||'').replace(/[^a-zA-Z0-9_-]/g,'_')}`}
-function enemySpriteTarget(type){
-  const key=enemySpriteKey(type);
-  const individual=SPRITE_CONFIG[key]||SPRITE_DEFAULT;
-  if(String(individual?.uri||'').trim())return {key,definition:individual,shared:false};
-  const shared=SPRITE_CONFIG.enemy;
-  // A configured common enemy URI is an explicit showcase/sample override.
-  // Keep it unset by default so per-enemy sprites continue to work normally.
-  if(String(shared?.uri||'').trim())return {key:'enemy',definition:shared,shared:true};
-  return {key,definition:individual,shared:false};
-}
 function setEnemySpriteState(enemy,state,force=false){
   if(!enemy)return;
   if(!force&&enemy.spriteState===state)return;
   enemy.spriteState=state;
   enemy.spriteStateStartFrame=Number(TEST_RUNTIME.frame)||0;
 }
-function updateEnemyFacing(enemy,dx,dy){
-  if(Math.abs(dx)<.001&&Math.abs(dy)<.001)return;
-  if(Math.abs(dx)>=Math.abs(dy))enemy.facing=dx<0?'left':'right';
-  else enemy.facing=dy<0?'up':'down';
-}
 function updateEnemySpriteState(enemy){
   if(!enemy)return;
-  updateEnemyFacing(enemy,enemy.moveX||0,enemy.moveY||0);
   if(enemy.dead){setEnemySpriteState(enemy,'death');return}
-  if((enemy.hitTimer||0)>0){setEnemySpriteState(enemy,'hit');return}
-  setEnemySpriteState(enemy,'idle');
+  if((enemy.hitTimer||0)>0){setEnemySpriteState(enemy,'hurt');return}
+  if(enemy.target&&dist(enemy.x,enemy.y,enemy.target.gx*tile+12,enemy.target.gy*tile+12)<tile*0.8){setEnemySpriteState(enemy,'attack');return}
+  setEnemySpriteState(enemy,'walk');
 }
-function enemySpriteFrameIndex(enemy,definition){
-  const columns=Math.max(1,Math.floor(Number(definition.columns)||ENEMY_SPRITE_LAYOUT.columns));
-  const frameDuration=Math.max(1,Number(definition.enemyFrameDuration)||ENEMY_SPRITE_LAYOUT.frameDuration);
-  const elapsed=Math.max(0,(Number(TEST_RUNTIME.frame)||0)-(Number(enemy.spriteStateStartFrame)||0));
-  const rawFrame=Math.floor(elapsed/frameDuration);
-  const animationFrame=enemy.spriteState==='death'?Math.min(columns-1,rawFrame):rawFrame%columns;
-  const stateRow=ENEMY_SPRITE_LAYOUT.stateRows[enemy.spriteState]??ENEMY_SPRITE_LAYOUT.stateRows.idle;
-  const directionRow=ENEMY_SPRITE_LAYOUT.directionRows[enemy.facing]??ENEMY_SPRITE_LAYOUT.directionRows.down;
-  return (stateRow+directionRow)*columns+animationFrame;
+function selectEnemyMotionDefinition(enemy){
+  const typeMotions=ENEMY_MOTIONS[enemy?.type]||{};
+  const state=enemy?.spriteState||'walk';
+  let targetKey=state;
+  if(state==='attack'){
+    const has01=!!typeMotions.attack01,has02=!!typeMotions.attack02;
+    if(has01&&has02){
+      const elapsed=Math.max(0,(Number(TEST_RUNTIME.frame)||0)-(Number(enemy.spriteStateStartFrame)||0));
+      const cycle=Math.floor(elapsed/24);
+      targetKey=(cycle%2===0)?'attack01':'attack02';
+    }else if(has01){
+      targetKey='attack01';
+    }else if(has02){
+      targetKey='attack02';
+    }else{
+      targetKey='walk';
+    }
+  }else if(state==='hit'){
+    targetKey='hurt';
+  }
+  let def=typeMotions[targetKey];
+  if(!def&&targetKey==='walk')def=typeMotions.idle||typeMotions.attack01;
+  if(!def&&targetKey==='idle')def=typeMotions.walk||typeMotions.attack01;
+  if(!def&&targetKey==='hurt')def=typeMotions.idle||typeMotions.walk;
+  if(!def&&targetKey==='death')def=typeMotions.hurt||typeMotions.idle||typeMotions.walk;
+  if(!def&&(targetKey==='attack01'||targetKey==='attack02'))def=typeMotions.walk||typeMotions.idle;
+  return def||null;
 }
 function drawEnemySprite(enemy){
-  const target=enemySpriteTarget(enemy?.type);
-  const sourceDefinition=target.shared?target.definition:{...target.definition,...(enemy.definition||{})};
-  const definition={...sourceDefinition,alignVisibleFrames:target.key==='enemy'||target.key.startsWith('enemy_')||sourceDefinition.alignVisibleFrames,width:(Number(sourceDefinition.width)||tile)*ENEMY_SPRITE_LAYOUT.displayScale,height:(Number(sourceDefinition.height)||tile)*ENEMY_SPRITE_LAYOUT.displayScale};
-  const isStateSheet=Number(definition.frames)>=((ENEMY_SPRITE_LAYOUT.stateRows.death+ENEMY_SPRITE_LAYOUT.directionRows.up+1)*ENEMY_SPRITE_LAYOUT.columns)&&Number(definition.columns||0)>=ENEMY_SPRITE_LAYOUT.columns;
-  const options={definition};
-  if(isStateSheet){
-    options.frameIndex=enemySpriteFrameIndex(enemy,definition);
-  }else{
-    options.flip=enemy.moveX<0;
-  }
-  if(drawSprite(target.key,enemy.x,enemy.y,options))return true;
-  // A failed per-enemy image may still use the common fallback. When the
-  // common URI is configured, do not fall through to another enemy image.
-  if(!target.shared&&target.key!=='enemy'){
-    const fallbackSourceDefinition={...SPRITE_CONFIG.enemy,...(enemy.definition||{})};
-    const fallbackDefinition={...fallbackSourceDefinition,alignVisibleFrames:true,width:(Number(fallbackSourceDefinition.width)||tile)*ENEMY_SPRITE_LAYOUT.displayScale,height:(Number(fallbackSourceDefinition.height)||tile)*ENEMY_SPRITE_LAYOUT.displayScale};
-    const fallbackOptions={definition:fallbackDefinition};
-    if(Number(fallbackDefinition.frames)>=((ENEMY_SPRITE_LAYOUT.stateRows.death+ENEMY_SPRITE_LAYOUT.directionRows.up+1)*ENEMY_SPRITE_LAYOUT.columns)&&Number(fallbackDefinition.columns||0)>=ENEMY_SPRITE_LAYOUT.columns)fallbackOptions.frameIndex=enemySpriteFrameIndex(enemy,fallbackDefinition);
-    else fallbackOptions.flip=enemy.moveX<0;
-    if(drawSprite('enemy',enemy.x,enemy.y,fallbackOptions))return true;
-  }
-  return false;
- }
+  const def=selectEnemyMotionDefinition(enemy);
+  if(!def||!def.uri)return false;
+  const state=loadSprite(def.uri);
+  if(!state?.ready)return false;
+  const cols=Math.max(1,Math.floor((state.naturalWidth||100)/100));
+  const elapsed=Math.max(0,(Number(TEST_RUNTIME.frame)||0)-(Number(enemy.spriteStateStartFrame)||0));
+  const frameDuration=Math.max(1,Number(def.frameDuration)||6);
+  const rawFrame=Math.floor(elapsed/frameDuration);
+  const frameIndex=(enemy.spriteState==='death')?Math.min(cols-1,rawFrame):(rawFrame%cols);
+  const options={
+    definition:{
+      ...def,
+      columns:cols,
+      rows:1,
+      frames:cols,
+      width:(Number(def.width)||tile)*ENEMY_SPRITE_LAYOUT.displayScale,
+      height:(Number(def.height)||tile)*ENEMY_SPRITE_LAYOUT.displayScale
+    },
+    frameIndex,
+    flip:(enemy.moveX<0)
+  };
+  return drawSprite(null,enemy.x,enemy.y,options);
+}
 const DIRECTION_ANGLES=Object.freeze({right:0,down:Math.PI/2,left:Math.PI,up:-Math.PI/2});
 function directionFromVector(dx,dy, fallback='right'){
   if(Math.abs(dx)<.001&&Math.abs(dy)<.001)return fallback;
@@ -422,7 +633,7 @@ class Drone{
 class Bullet{constructor(t,e){this.t=t;this.e=e;this.x=t.gx*tile+12;this.y=t.gy*tile+12;this.angle=0;this.dead=false}update(){if(!this.e||this.e.hp<=0){this.dead=true;return}let d=dist(this.x,this.y,this.e.x,this.e.y),sp=5;this.angle=Math.atan2(this.e.y-this.y,this.e.x-this.x);if(d<sp){let dmg=(this.t.type==='mg'?CONFIG.mgDamage*mult('mg_damage'):CONFIG.missileDamage*mult('missile_damage'));if(this.t.type==='missile'){enemies.forEach(e=>{if(dist(e.x,e.y,this.e.x,this.e.y)<CONFIG.missileSplashRadius*tile)damageEnemy(e,dmg,{type:this.t.type})});effects.push(new Explosion(this.e.x,this.e.y))}else damageEnemy(this.e,dmg,{type:this.t.type});this.dead=true}else{this.x+=(this.e.x-this.x)/d*sp;this.y+=(this.e.y-this.y)/d*sp}}}class TextEffect{constructor(x,y,t,c,kind='gain'){this.x=x;this.y=y;this.t=t;this.c=c;this.kind=kind;this.life=50}update(){this.y-=this.kind==='enemy-damage'?0.7:1;this.life--}}class SpriteEffect{constructor(x,y,type){this.x=x;this.y=y;this.type=type;this.life=24}update(){this.life--}}class Explosion{constructor(x,y){this.x=x;this.y=y;this.life=20}update(){this.life--}}
 function formatFctNumber(value){const n=Number(value)||0;return Number.isInteger(n)?String(n):n.toFixed(1).replace(/\.0$/,'')}
 function spawnFct(x,y,text,color,kind='gain'){effects.push(new TextEffect(x,y,text,color,kind))}
- function damageEnemy(enemy,damage,source={}){if(!enemy||enemy.hp<=0||enemy.dead)return;const amount=Math.max(0,Number(damage)||0);enemy.hp-=amount;if(amount>0){if(enemy.hp<=0){enemy.dead=true;enemy.hitTimer=0;enemy.deathTimer=ENEMY_SPRITE_LAYOUT.deathDuration;setEnemySpriteState(enemy,'death',true)}else{enemy.hitTimer=ENEMY_SPRITE_LAYOUT.hitDuration;setEnemySpriteState(enemy,'hit',true)}}const color=source.type==='poison'?'#b78cff':source.type==='burn'?'#ff9b54':'#fff';spawnFct(enemy.x,enemy.y,`-${formatFctNumber(amount)}`,color,source.type==='poison'||source.type==='burn'?'trap-damage':'enemy-hit');}
+ function damageEnemy(enemy,damage,source={}){if(!enemy||enemy.hp<=0||enemy.dead)return;const amount=Math.max(0,Number(damage)||0);enemy.hp-=amount;if(amount>0){if(enemy.hp<=0){enemy.dead=true;enemy.hitTimer=0;enemy.deathTimer=ENEMY_SPRITE_LAYOUT.deathDuration;setEnemySpriteState(enemy,'death',true)}else{const isStatusEffect=['poison','burn','slow','stun','armor_down','knockback','pull'].includes(source?.type);if(!isStatusEffect){enemy.hitTimer=ENEMY_SPRITE_LAYOUT.hitDuration;setEnemySpriteState(enemy,'hurt',true)}}}const color=source.type==='poison'?'#b78cff':source.type==='burn'?'#ff9b54':'#fff';spawnFct(enemy.x,enemy.y,`-${formatFctNumber(amount)}`,color,source.type==='poison'||source.type==='burn'?'trap-damage':'enemy-hit');}
 function dist(x,y,a,b){return Math.hypot(x-a,y-b)}function solid(x,y,tx,ty){if(x<0||y<0||x>=CONFIG.gridCols||y>=CONFIG.gridRows||!isMapCell(x,y))return true;return grid[y][x]&&!(x===tx&&y===ty)}function findPath(sx,sy,tx,ty){let q=[[sx,sy]],prev=new Map([[`${sx},${sy}`,null]]);for(let i=0;i<q.length;i++){let [x,y]=q[i];if(x===tx&&y===ty){let p=[];for(let k=`${x},${y}`;k;k=prev.get(k))p.unshift(k.split(',').map(Number));return p}for(let [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){let nx=x+dx,ny=y+dy,k=`${nx},${ny}`;if(!prev.has(k)&&!solid(nx,ny,tx,ty)){prev.set(k,`${x},${y}`);q.push([nx,ny])}}}return []}function addFarm(x,y){let f=new Farm(x,y);farms.push(f);grid[y][x]='farm'}function validPlace(x,y){if(x<0||y<1||x>=CONFIG.gridCols||y>=CONFIG.gridRows-1||grid[y][x])return false;grid[y][x]='blocked';let ok=farms.every(f=>findPath(Math.floor(CONFIG.gridCols/2),0,f.gx,f.gy).length);grid[y][x]=null;return ok}function place(x,y,type){let cost=getBuildingCost(type);if(!validPlace(x,y)||money<cost)return false;money-=cost;if(TRAP_DEFINITIONS[type]){const result=trapEngine.place(x,y,TRAP_DEFINITIONS[type],lineDirection);if(!result.ok){money+=cost;toast(result.error);return false}renderAll();return true}if(type==='farm')addFarm(x,y);else{grid[y][x]=type;buildings.push(new Building(type,x,y))}renderAll();return true}
 function removeBuilding(building){
   const index=buildings.indexOf(building);
@@ -586,7 +797,7 @@ const MAP_DEFINITIONS={
         {id:'trap_tile_armor_down',gx:6,gy:7},{id:'trap_tile_armor_down',gx:12,gy:7},{id:'trap_tile_armor_down',gx:18,gy:7},{id:'trap_tile_armor_down',gx:24,gy:7}
       ],
       droneCounts:{sow:4,water:4,harvest:4,excavation:4},
-      wave:{showcase_titan:96,brute:96,knight:48,shieldmaster:16,priest:8,drummer:8,wizard_speed:4,wizard_attack:4,wizard_heal:4},
+      wave:{werebear:96,knight_templar:48,priest:16,necromancer:16,wizard:8},
       spawnInterval:12
     }
   }
@@ -860,7 +1071,7 @@ setTimeout(()=>{$('btn-start-wave').onclick=startWave;$('restart').onclick=()=>{
 
 // Data-driven enemy extension.
 const BaseEnemy=Enemy;
-function enemyDefinition(id){return ENEMY_DEFINITIONS[id]||ENEMY_DEFINITIONS.peasant}
+function enemyDefinition(id){return ENEMY_DEFINITIONS[id]||ENEMY_DEFINITIONS.slime}
 function enemyDistance(a,b){return dist(a.x,a.y,b.x,b.y)}
 function refreshEnemyAuras(){
  enemies.forEach(e=>{e.speedMultiplier=1;e.attackMultiplier=1});

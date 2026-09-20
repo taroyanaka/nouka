@@ -117,21 +117,21 @@ let savedConfig = (() => {
   const standardWaves = Object.fromEntries(
     Array.from({ length: 10 }, (_, index) => [
       index + 1,
-      { peasant: 10, adventurer: 5 }
+      { bat: 10, slime: 5 }
     ])
   );
 
-  const coinBaseWaves = {
-    1:  { peasant: 10, adventurer: 2 },
-    2:  { peasant: 14, adventurer: 6 },
-    3:  { peasant: 20, adventurer: 10, warrior: 2 },
-    4:  { peasant: 28, adventurer: 14, warrior: 4, thief: 2 },
-    5:  { peasant: 38, adventurer: 20, warrior: 8, thief: 4 },
-    6:  { peasant: 48, adventurer: 25, warrior: 12, thief: 6, horseman: 4 },
-    7:  { peasant: 58, adventurer: 30, warrior: 18, thief: 10, horseman: 6, priest: 3 },
-    8:  { peasant: 70, adventurer: 35, warrior: 22, thief: 14, horseman: 8, priest: 5, drummer: 3 },
-    9:  { peasant: 85, adventurer: 42, warrior: 28, thief: 18, horseman: 12, knight: 5, priest: 5, drummer: 5 },
-    10: { peasant: 105, adventurer: 52, warrior: 35, thief: 22, horseman: 16, knight: 8, brute: 3, priest: 6, drummer: 6, wizard_speed: 3 }
+    const coinBaseWaves = {
+    1:  { bat: 10, slime: 2 },
+    2:  { bat: 14, slime: 6 },
+    3:  { bat: 20, slime: 10, skeleton: 2 },
+    4:  { bat: 28, slime: 14, skeleton: 4, skeleton_archer: 2 },
+    5:  { skeleton: 38, orc: 20, soldier: 8, skeleton_archer: 4 },
+    6:  { soldier: 48, swordsman: 25, lancer: 12, archer: 6, orc_rider: 4 },
+    7:  { swordsman: 58, lancer: 30, armored_skeleton: 18, archer: 10, orc_rider: 6, priest: 3 },
+    8:  { armored_skeleton: 70, armored_orc: 35, armored_axeman: 22, archer: 14, orc_rider: 8, priest: 5, necromancer: 3 },
+    9:  { armored_orc: 85, armored_axeman: 42, elite_orc: 28, archer: 18, orc_rider: 12, knight: 5, priest: 5, necromancer: 5 },
+    10: { armored_axeman: 105, elite_orc: 52, greatsword_skeleton: 35, archer: 22, orc_rider: 16, knight: 8, werebear: 3, priest: 6, necromancer: 6, wizard: 3 }
   };
 
   const scaledWaves = multiplier =>
@@ -149,17 +149,17 @@ let savedConfig = (() => {
 
   // CPレギュ2は物量重視。序盤から50体程度を出し、Waveが進むほど
   // 戦士・騎兵・騎士・ブルートなどの強敵比率を段階的に高める。
-  const cp2BaseWaves = {
-    1:  { peasant: 25, adventurer: 15, warrior: 6, thief: 4 },
-    2:  { peasant: 28, adventurer: 16, warrior: 10, thief: 6, horseman: 3 },
-    3:  { peasant: 30, adventurer: 18, warrior: 14, thief: 8, horseman: 6 },
-    4:  { peasant: 32, adventurer: 18, warrior: 18, thief: 9, horseman: 9, priest: 3 },
-    5:  { peasant: 34, adventurer: 18, warrior: 22, thief: 10, horseman: 12, knight: 4, priest: 4 },
-    6:  { peasant: 35, adventurer: 18, warrior: 25, thief: 10, horseman: 15, knight: 8, priest: 5, drummer: 4 },
-    7:  { peasant: 34, adventurer: 18, warrior: 28, thief: 10, horseman: 18, knight: 12, brute: 3, priest: 6, drummer: 5 },
-    8:  { peasant: 32, adventurer: 17, warrior: 30, thief: 10, horseman: 21, knight: 16, brute: 6, priest: 7, drummer: 6 },
-    9:  { peasant: 30, adventurer: 16, warrior: 32, thief: 10, horseman: 24, knight: 20, brute: 10, priest: 8, drummer: 7, wizard_speed: 3 },
-    10: { peasant: 28, adventurer: 15, warrior: 34, thief: 10, horseman: 27, knight: 24, brute: 15, priest: 9, drummer: 8, wizard_speed: 5 }
+    const cp2BaseWaves = {
+    1:  { bat: 25, slime: 15, skeleton: 6, skeleton_archer: 4 },
+    2:  { bat: 28, slime: 16, skeleton: 10, skeleton_archer: 6, orc: 3 },
+    3:  { slime: 30, skeleton: 18, soldier: 14, skeleton_archer: 8, orc: 6 },
+    4:  { skeleton: 32, soldier: 18, swordsman: 18, archer: 9, lancer: 9, priest: 3 },
+    5:  { soldier: 34, swordsman: 18, lancer: 22, archer: 10, orc_rider: 12, armored_skeleton: 4, priest: 4 },
+    6:  { swordsman: 35, lancer: 18, armored_skeleton: 25, archer: 10, orc_rider: 15, armored_orc: 8, priest: 5, necromancer: 4 },
+    7:  { lancer: 34, armored_skeleton: 18, armored_orc: 28, archer: 10, orc_rider: 18, armored_axeman: 12, knight: 3, priest: 6, necromancer: 5 },
+    8:  { armored_skeleton: 32, armored_orc: 17, armored_axeman: 30, archer: 10, orc_rider: 21, knight: 16, elite_orc: 6, priest: 7, necromancer: 6 },
+    9:  { armored_orc: 30, armored_axeman: 16, elite_orc: 32, archer: 10, orc_rider: 24, knight: 20, greatsword_skeleton: 10, priest: 8, necromancer: 7, wizard: 3 },
+    10: { armored_axeman: 28, elite_orc: 15, greatsword_skeleton: 34, archer: 10, orc_rider: 27, knight: 24, werebear: 15, priest: 9, necromancer: 8, knight_templar: 5 }
   };
 
   const cp2ScaledWaves = multiplier =>
